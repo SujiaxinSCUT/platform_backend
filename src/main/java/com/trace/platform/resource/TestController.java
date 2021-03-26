@@ -1,4 +1,4 @@
-package com.trace.platform.controller;
+package com.trace.platform.resource;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;

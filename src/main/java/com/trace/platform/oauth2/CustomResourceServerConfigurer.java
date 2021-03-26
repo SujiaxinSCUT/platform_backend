@@ -28,7 +28,15 @@ public class CustomResourceServerConfigurer extends ResourceServerConfigurerAdap
                 .and()
                 .authorizeRequests()
                 .antMatchers("/trace/admin/quality/**")
-                .hasAuthority("ROLE_ADMIN_QUALITY");
+                .hasAuthority("ROLE_ADMIN_QUALITY")
+                .and()
+                .authorizeRequests()
+                .antMatchers("/oauth/**").permitAll()
+                .and()
+                .cors()
+                .and()
+                .csrf()
+                .disable();;
     }
 
     @Override

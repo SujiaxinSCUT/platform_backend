@@ -24,7 +24,15 @@ public class CustomServerConfiguration extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.inMemory()
-                .withClient("client")  //客户端名称
+                .withClient("client_user")  //客户端名称
+                .secret(passwordEncoder.encode("platform"))  //客户端密码
+                .authorizedGrantTypes("password","refresh_token")  //密码模式
+                .scopes("select")  //授权范围
+                .resourceIds(CustomResourceServerConfigurer.RESOURCE_ID)  //资源服务器的id，这个在资源服务器里有配置。
+                .accessTokenValiditySeconds(1800)  //有效时间
+                .refreshTokenValiditySeconds(50000)
+                .and()
+                .withClient("client_admin")  //客户端名称
                 .secret(passwordEncoder.encode("platform"))  //客户端密码
                 .authorizedGrantTypes("password","refresh_token")  //密码模式
                 .scopes("select")  //授权范围
