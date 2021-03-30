@@ -2,16 +2,18 @@ package com.trace.platform.resource;
 
 import com.trace.platform.entity.Product;
 import com.trace.platform.repository.ProductRepository;
-import com.trace.platform.resource.dto.ProductManageRequest;
+import com.trace.platform.resource.dto.ProductCreateRequest;
+import com.trace.platform.resource.pojo.PageableRequest;
+import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.utils.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -28,17 +30,17 @@ public class ProductResource {
     private String ImgDirUrl;
 
     @PostMapping
-    public ResponseEntity createProduct(ProductManageRequest productManageRequest) {
-        if (productRepository.findByName(productManageRequest.getName()) != null) {
-            return new ResponseEntity(HttpStatus.CONFLICT);
+    public ResponseEntity createProduct(ProductCreateRequest productCreateRequest) {
+        if (productRepository.findByName(productCreateRequest.getName()) != null) {
+            return new ResponseEntity("已存在该产品", HttpStatus.CONFLICT);
         }
 
-        String path = ImgDirUrl + File.separator + productManageRequest.getName();
+        String path = ImgDirUrl + File.separator + productCreateRequest.getName();
         if (!FileUtil.existsOrCreateDir(path)) {
             return new ResponseEntity("创建产品图片文件夹失败",HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        MultipartFile[] images = productManageRequest.getImages();
+        MultipartFile[] images = productCreateRequest.getImages();
         for (MultipartFile image : images) {
             try {
                 String originImgName = image.getOriginalFilename();
@@ -51,12 +53,28 @@ public class ProductResource {
         }
 
         Product product = new Product();
-        product.setName(productManageRequest.getName());
-        product.setDescription(productManageRequest.getDescription());
+        product.setName(productCreateRequest.getName());
+        product.setDescription(productCreateRequest.getDescription());
         product.setDate(new Date());
         product.setImgDirUrl(path);
-        product.setSubmitterId(productManageRequest.getSubmitterId());
+        product.setSubmitterId(productCreateRequest.getSubmitterId());
+        product.setUnit(productCreateRequest.getUnit());
         productRepository.save(product);
         return new ResponseEntity(HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public PageableResponse<Product> getProductsPageable(PageableRequest request) {
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+        Page<Product> productPage = productRepository.findAll(pageable);
+
+        PageableResponse<Product> response = new PageableResponse<>();
+        response.setContents(productPage.getContent());
+        response.setPage(productPage.getNumber());
+        response.setSize(productPage.getSize());
+        response.setTotalElements(productPage.getTotalElements());
+        response.setTotalPages(productPage.getTotalPages());
+
+        return response;
     }
 }

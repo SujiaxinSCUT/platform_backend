@@ -1,8 +1,12 @@
 package com.trace.platform.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name="account")
@@ -81,4 +85,5 @@ public class Account implements Serializable {
     public void setCertificate(String certificate) {
         this.certificate = certificate;
     }
+
 }

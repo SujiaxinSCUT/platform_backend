@@ -2,14 +2,15 @@ package com.trace.platform.resource.dto;
 
 import org.springframework.web.multipart.MultipartFile;
 
-public class ProductManageRequest {
+public class ProductCreateRequest {
 
     private String name;
     private String description;
     private MultipartFile[] images;
-    private int submitterId;
+    private String unit;
+    private Integer submitterId;
 
-    public ProductManageRequest() {
+    public ProductCreateRequest() {
     }
 
     public String getName() {
@@ -42,5 +43,13 @@ public class ProductManageRequest {
 
     public void setSubmitterId(int submitterId) {
         this.submitterId = submitterId;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 }

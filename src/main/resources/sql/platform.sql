@@ -31,11 +31,28 @@ INSERT INTO `account` values(4, "admin3", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG
 -- ----------------------------
 DROP TABLE IF EXISTS `product`;
 CREATE TABLE `product` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `img_url` varchar(255) NOT NULL,
-  `date` timestamp NULL NOT NULL,
+  `unit` varchar(255) NOT NULL,
+  `date` timestamp NOT NULL,
   `submitter_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for peer_channel_rel
+-- ----------------------------
+DROP TABLE IF EXISTS `stock`;
+CREATE TABLE `stock` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `account_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `batch_id` varchar(255) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `price` int(11) NOT NULL,
+  `status` varchar(255) NOT NULL,
+  `date` timestamp NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

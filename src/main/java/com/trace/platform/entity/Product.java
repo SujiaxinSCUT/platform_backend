@@ -12,6 +12,7 @@ public class Product implements Serializable {
     private int id;
     private Date date;
     private String name;
+    private String unit;
     private String description;
     private String imgDirUrl;
     private int submitterId;
@@ -70,5 +71,14 @@ public class Product implements Serializable {
 
     public void setSubmitterId(int submitterId) {
         this.submitterId = submitterId;
+    }
+
+    @Column(nullable = false, name = "unit")
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 }
