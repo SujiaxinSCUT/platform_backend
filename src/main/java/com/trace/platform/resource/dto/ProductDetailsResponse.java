@@ -7,7 +7,7 @@ public class ProductDetailsResponse {
     private String name;
     private String description;
     private String unit;
-    private int sum;
+    private Double sum;
 
     public int getId() {
         return id;
@@ -41,11 +41,11 @@ public class ProductDetailsResponse {
         this.unit = unit;
     }
 
-    public int getSum() {
+    public Double getSum() {
         return sum;
     }
 
-    public void setSum(int sum) {
+    public void setSum(Double sum) {
         this.sum = sum;
     }
 }

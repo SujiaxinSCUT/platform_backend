@@ -18,8 +18,8 @@ public class Stock implements Serializable {
     private int productId;
     private String batchId;
     private Date date;
-    private int quantity;
-    private int price;
+    private double quantity;
+    private double price;
     private String status;
 
     @Id
@@ -69,20 +69,20 @@ public class Stock implements Serializable {
     }
 
     @Column(nullable=false, name = "quantity")
-    public int getQuantity() {
+    public double getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(double quantity) {
         this.quantity = quantity;
     }
 
     @Column(nullable=false, name = "price")
-    public int getPrice() {
+    public double getPrice() {
         return price;
     }
 
-    public void setPrice(int price) {
+    public void setPrice(double price) {
         this.price = price;
     }
 

@@ -30,7 +30,7 @@ public class StockServiceImpl implements IStockService {
             productDetailsResponse.setDescription((String) map.get("description"));
             productDetailsResponse.setName((String) map.get("name"));
             productDetailsResponse.setUnit((String) map.get("unit"));
-            productDetailsResponse.setSum(Integer.valueOf(map.get("sum").toString()));
+            productDetailsResponse.setSum(Double.valueOf(map.get("sum").toString()));
             list.add(productDetailsResponse);
         }
 

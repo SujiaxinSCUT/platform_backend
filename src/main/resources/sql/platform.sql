@@ -50,8 +50,8 @@ CREATE TABLE `stock` (
   `account_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
   `batch_id` varchar(255) NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `price` int(11) NOT NULL,
+  `quantity` double(18,2) NOT NULL,
+  `price` double(18,2) NOT NULL,
   `status` varchar(255) NOT NULL,
   `date` timestamp NOT NULL,
   PRIMARY KEY (`id`)

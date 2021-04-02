@@ -17,9 +17,10 @@ import java.util.Map;
 @Transactional(propagation = Propagation.REQUIRED)
 public interface StockRepository extends JpaRepository<Stock, Integer> {
 
-    @Query(value = "select id,name,description,unit,sum " +
-            " from (select product_id, sum(quantity) as sum from stock " +
-            " where account_id = :account_id group by product_id) as record " +
-            " left join product on record.product_id = product.id", nativeQuery = true)
+    @Query(nativeQuery = true, value = "select id,name,description,unit,sum from " +
+            "product left join " +
+            "(select product_id, sum(cast(quantity as decimal(18,2))) as sum from stock where account_id = :account_id group by product_id) as record" +
+            " on record.product_id = product.id",
+            countQuery = "select count(*) from stock")
     Page<Map<String, Object>> findProductInStock(@Param("account_id") int account_id, Pageable pageable);
 }

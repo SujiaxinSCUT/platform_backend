@@ -10,7 +10,6 @@ import com.trace.platform.resource.pojo.PageableRequest;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IStockService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -59,9 +58,10 @@ public class StockResource {
         return new ResponseEntity(HttpStatus.CREATED);
     }
 
-    @GetMapping
-    public PageableResponse<ProductDetailsResponse> getProductInStock(PageableRequest pageableRequest, @RequestParam("account_id") int accountId) {
-        Pageable pageable = PageRequest.of(pageableRequest.getPage(), pageableRequest.getSize());
+    @GetMapping("/stock/{page}/{size}/{account_id}")
+    public PageableResponse<ProductDetailsResponse> getProductInStock(
+            @PathVariable("page")int page, @PathVariable("size") int size,@PathVariable("account_id") int accountId) {
+        Pageable pageable = PageRequest.of(page, size);
         PageableResponse<ProductDetailsResponse> response = iStockService.getProductInStock(accountId, pageable);
         return response;
     }

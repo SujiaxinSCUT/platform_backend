@@ -4,8 +4,8 @@ public class StockCreateRequest {
 
     private int accountId;
     private int productId;
-    private int quantity;
-    private int price;
+    private double quantity;
+    private double price;
 
     public StockCreateRequest() {
     }
@@ -26,19 +26,19 @@ public class StockCreateRequest {
         this.productId = productId;
     }
 
-    public int getQuantity() {
+    public double getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(double quantity) {
         this.quantity = quantity;
     }
 
-    public int getPrice() {
+    public double getPrice() {
         return price;
     }
 
-    public void setPrice(int price) {
+    public void setPrice(double price) {
         this.price = price;
     }
 }
