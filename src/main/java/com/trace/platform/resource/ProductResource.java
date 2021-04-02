@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/trace/product")
@@ -77,4 +78,11 @@ public class ProductResource {
 
         return response;
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Product>> getProductAll() {
+        List<Product> productList = productRepository.findAll();
+        return new ResponseEntity<List<Product>>(productList, HttpStatus.OK);
+    }
+
 }
