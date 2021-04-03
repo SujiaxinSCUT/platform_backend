@@ -20,8 +20,8 @@ public class StockServiceImpl implements IStockService {
     private StockRepository stockRepository;
 
     @Override
-    public PageableResponse<ProductDetailsResponse> getProductInStock(int account_id, Pageable pageable) {
-        Page<Map<String, Object>> page = stockRepository.findProductInStock(account_id, pageable);
+    public PageableResponse<ProductDetailsResponse> getProductInStockPageable(int account_id, Pageable pageable) {
+        Page<Map<String, Object>> page = stockRepository.findProductInStockPageable(account_id, pageable);
         List<Map<String, Object>> content = page.getContent();
         List<ProductDetailsResponse> list = new ArrayList<>();
         for (Map<String, Object> map: content) {
@@ -41,5 +41,23 @@ public class StockServiceImpl implements IStockService {
         response.setTotalPages(page.getTotalPages());
         response.setContents(list);
         return response;
+    }
+
+    @Override
+    public List<ProductDetailsResponse> getAllProductsInStock(int account_id) {
+        List<Map<String, Object>> mapList = stockRepository.findAllProductsInStock(account_id);
+        List<ProductDetailsResponse> list = new ArrayList<>();
+
+        for (Map<String, Object> map: mapList) {
+            ProductDetailsResponse productDetailsResponse = new ProductDetailsResponse();
+            productDetailsResponse.setId(Integer.valueOf(map.get("id").toString()));
+            productDetailsResponse.setDescription((String) map.get("description"));
+            productDetailsResponse.setName((String) map.get("name"));
+            productDetailsResponse.setUnit((String) map.get("unit"));
+            productDetailsResponse.setSum(Double.valueOf(map.get("sum").toString()));
+            list.add(productDetailsResponse);
+        }
+
+        return list;
     }
 }

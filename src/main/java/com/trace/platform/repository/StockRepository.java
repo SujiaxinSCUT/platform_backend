@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -22,5 +23,13 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
             "(select product_id, sum(cast(quantity as decimal(18,2))) as sum from stock where account_id = :account_id group by product_id) as record" +
             " on record.product_id = product.id",
             countQuery = "select count(*) from stock")
-    Page<Map<String, Object>> findProductInStock(@Param("account_id") int account_id, Pageable pageable);
+    Page<Map<String, Object>> findProductInStockPageable(@Param("account_id") int account_id, Pageable pageable);
+
+    List<Stock> findAllByAccountIdAndProductId(int account_id, int product_id);
+
+    @Query(nativeQuery = true, value = "select id,name,description,unit,sum from " +
+            "product left join " +
+            "(select product_id, sum(cast(quantity as decimal(18,2))) as sum from stock where account_id = :account_id group by product_id) as record" +
+            " on record.product_id = product.id")
+    List<Map<String, Object>> findAllProductsInStock(@Param("account_id") int account_id);
 }

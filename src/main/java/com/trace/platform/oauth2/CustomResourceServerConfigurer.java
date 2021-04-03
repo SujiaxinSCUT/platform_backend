@@ -19,7 +19,7 @@ public class CustomResourceServerConfigurer extends ResourceServerConfigurerAdap
         http.requestMatchers().antMatchers("/trace/**")
                 .and()
                 .authorizeRequests()
-                .antMatchers("/trace/user/**")
+                .antMatchers("/trace/business/**")
                 .hasAuthority("ROLE_USER")
                 .and()
                 .authorizeRequests()
