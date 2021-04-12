@@ -42,7 +42,7 @@ CREATE TABLE `product` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Table structure for peer_channel_rel
+-- Table structure for stock
 -- ----------------------------
 DROP TABLE IF EXISTS `stock`;
 CREATE TABLE `stock` (
@@ -54,5 +54,47 @@ CREATE TABLE `stock` (
   `price` double(18,2) NOT NULL,
   `status` varchar(255) NOT NULL,
   `date` timestamp NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for order
+-- ----------------------------
+DROP TABLE IF EXISTS `order`;
+CREATE TABLE `order` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `client_id` int(11) NOT NULL,
+  `supplier_id` int(11) NOT NULL,
+  `status` varchar(255) NOT NULL,
+  `date` timestamp NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+-- ----------------------------
+-- Table structure for ordered_product
+-- ----------------------------
+DROP TABLE IF EXISTS `ordered_product`;
+CREATE TABLE `ordered_product` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` double(18,2) NOT NULL,
+  `price` double(18,2) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for fabric_order
+-- ----------------------------
+DROP TABLE IF EXISTS `fabric_order`;
+CREATE TABLE `fabric_order` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `batch_id` int(11) NOT NULL,
+  `fabric_order_id` int(11) NOT NULL,
+  `quantity` double(18,2) NOT NULL,
+  `price` double(18,2) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
