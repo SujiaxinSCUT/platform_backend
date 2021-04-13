@@ -10,19 +10,20 @@ import java.util.Date;
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    private int id;
+
+    private String clientName;
+
+    private String supplierName;
+
+    private Date date;
+
+    private String status;
+
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(unique=true, nullable=false)
-    private int id;
-    @Column(nullable=false, name = "client_id")
-    private int clientId;
-    @Column(nullable=false, name = "supplier_id")
-    private int supplierId;
-    @Column(nullable=false, name = "date")
-    private Date date;
-    @Column(nullable=false, name = "status")
-    private String status;
-
     public int getId() {
         return id;
     }
@@ -31,22 +32,25 @@ public class Order implements Serializable {
         this.id = id;
     }
 
-    public int getClientId() {
-        return clientId;
+    @Column(nullable=false, name = "client_name")
+    public String getClientName() {
+        return clientName;
     }
 
-    public void setClientId(int clientId) {
-        this.clientId = clientId;
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 
-    public int getSupplierId() {
-        return supplierId;
+    @Column(nullable=false, name = "supplier_name")
+    public String getSupplierName() {
+        return supplierName;
     }
 
-    public void setSupplierId(int supplierId) {
-        this.supplierId = supplierId;
+    public void setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
     }
 
+    @Column(nullable=false, name = "date")
     public Date getDate() {
         return date;
     }
@@ -55,6 +59,7 @@ public class Order implements Serializable {
         this.date = date;
     }
 
+    @Column(nullable=false, name = "status")
     public String getStatus() {
         return status;
     }

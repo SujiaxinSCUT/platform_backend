@@ -7,19 +7,19 @@ import java.util.List;
 
 public class OrderCreateRequest {
 
-    private int supplierId;
+    private String supplierName;
     private Date date;
     private List<OrderedProduct> products;
 
     public OrderCreateRequest() {
     }
 
-    public int getSupplierId() {
-        return supplierId;
+    public String getSupplierName() {
+        return supplierName;
     }
 
-    public void setSupplierId(int supplierId) {
-        this.supplierId = supplierId;
+    public void setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
     }
 
     public Date getDate() {
