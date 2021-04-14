@@ -21,12 +21,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 
 
 @RestController
-@RequestMapping("/trace/account/order")
+@RequestMapping("/trace/business/order")
 public class OrderResource {
 
     @Autowired
@@ -47,18 +46,21 @@ public class OrderResource {
         }
 
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        if (currentUsername.equalsIgnoreCase(orderCreateRequest.getSupplierName())) {
+            return new ResponseEntity("不允许与自己交易", HttpStatus.CONFLICT);
+        }
         if (orderRepository.findOne(currentUsername, orderCreateRequest.getSupplierName(), orderCreateRequest.getDate()) != null) {
             return new ResponseEntity("已存在该订单", HttpStatus.CONFLICT);
         }
-//        Order order = new Order();
-//        order.setClientName(currentUsername);
-//        order.setSupplierName(orderCreateRequest.getSupplierName());
-//        order.setStatus(Order.Status.CONFIRMING);
-//        order.setDate(orderCreateRequest.getDate());
-//
-//        Order savedOrder = orderRepository.save(order);
-        orderRepository.insert(currentUsername, orderCreateRequest.getSupplierName(), Order.Status.CONFIRMING, orderCreateRequest.getDate());
-        Order savedOrder = orderRepository.findOne(currentUsername, orderCreateRequest.getSupplierName(), orderCreateRequest.getDate());
+        Order order = new Order();
+        order.setClientName(currentUsername);
+        order.setSupplierName(orderCreateRequest.getSupplierName());
+        order.setStatus(Order.Status.CONFIRMING);
+        order.setDate(orderCreateRequest.getDate());
+
+        Order savedOrder = orderRepository.save(order);
+//        orderRepository.insert(currentUsername, orderCreateRequest.getSupplierName(), Order.Status.CONFIRMING, orderCreateRequest.getDate());
+//        Order savedOrder = orderRepository.findOne(currentUsername, orderCreateRequest.getSupplierName(), orderCreateRequest.getDate());
 
         List<OrderedProduct> orderedProducts = orderCreateRequest.getProducts();
         for (OrderedProduct orderedProduct : orderedProducts) {
@@ -98,9 +100,12 @@ public class OrderResource {
 
     @PostMapping("/pageable/{page}/{size}")
     public PageableResponse<Order> getOrderPageable(@PathVariable("page")int page, @PathVariable("size")int size,
-                                                    OrderQueryRequest request) {
+                                                    @RequestBody OrderQueryRequest request) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
         OrderQueryBody body = new OrderQueryBody();
+        System.out.println("product_name: " + request.getProduct_name());
+        System.out.println("username: " + request.getUsername());
+        System.out.println("isSales_order: " + request.isSales_order());
         if (request.isSales_order()) {
             body.setClientMatchName(request.getUsername());
             body.setSupplierQueryName(currentUsername);

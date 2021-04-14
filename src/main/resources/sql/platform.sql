@@ -59,10 +59,10 @@ CREATE TABLE `stock` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Table structure for order
+-- Table structure for system_order
 -- ----------------------------
-DROP TABLE IF EXISTS `order`;
-CREATE TABLE `order` (
+DROP TABLE IF EXISTS `system_order`;
+CREATE TABLE `system_order` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `client_name` varchar(255) NOT NULL,
   `supplier_name` varchar(255) NOT NULL,

@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 @Entity
-@Table(name="order")
+@Table(name="system_order")
 @NamedQuery(name="Order.findAll", query="SELECT o FROM Order o")
 public class Order implements Serializable {
 
