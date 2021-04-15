@@ -16,11 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 
@@ -100,22 +102,28 @@ public class OrderResource {
 
     @PostMapping("/pageable/{page}/{size}")
     public PageableResponse<Order> getOrderPageable(@PathVariable("page")int page, @PathVariable("size")int size,
-                                                    @RequestBody OrderQueryRequest request) {
+                                                    @Param("sales_order")boolean salesOrder, @Param("username")String username,
+                                                    @Param("start_date") Date startDate, @Param("end_date")Date endDate,
+                                                    @Param("product_name")String productName) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        OrderQueryRequest request = new OrderQueryRequest();
+        request.setUsername(username);
+        request.setStartDate(startDate);
+        request.setEndDate(endDate);
+        request.setProductName(productName);
+        request.setSalesOrder(salesOrder);
         OrderQueryBody body = new OrderQueryBody();
-        System.out.println("product_name: " + request.getProduct_name());
-        System.out.println("username: " + request.getUsername());
-        System.out.println("isSales_order: " + request.isSales_order());
-        if (request.isSales_order()) {
+        System.out.println(request.isSalesOrder());
+        if (request.isSalesOrder()) {
             body.setClientMatchName(request.getUsername());
             body.setSupplierQueryName(currentUsername);
         } else {
             body.setSupplierMatchName(request.getUsername());
             body.setClientQueryName(currentUsername);
         }
-        body.setStartDate(request.getStart_date());
-        body.setEndDate(request.getEnd_date());
-        body.setProductName(request.getProduct_name());
+        body.setStartDate(request.getStartDate());
+        body.setEndDate(request.getEndDate());
+        body.setProductName(request.getProductName());
 
         Pageable pageable = PageRequest.of(page, size);
         PageableResponse<Order> response = iOrderService.getOrderPageable(body, pageable);

@@ -47,6 +47,14 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public PageableResponse<Order> getOrderPageable(OrderQueryBody queryBody, Pageable pageable) {
+        System.out.println(queryBody.getSupplierQueryName());
+        System.out.println(queryBody.getClientQueryName());
+        System.out.println(queryBody.getSupplierMatchName());
+        System.out.println(queryBody.getClientMatchName());
+        System.out.println(queryBody.getStartDate());
+        System.out.println(queryBody.getEndDate());
+        System.out.println(queryBody.getProductName());
+
         Page<Order> page = orderRepository.findDynamicPageable(queryBody.getSupplierQueryName(),
                 queryBody.getClientQueryName(),
                 queryBody.getSupplierMatchName(),
