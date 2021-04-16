@@ -38,7 +38,7 @@ public class StockResource {
     private IStockService iStockService;
 
     @PostMapping
-    public ResponseEntity addProduct(StockCreateRequest stockCreateRequest) {
+    public ResponseEntity createStock(StockCreateRequest stockCreateRequest) {
         if (!accountRepository.findById(stockCreateRequest.getAccountId()).isPresent()) {
             return new ResponseEntity("不存在该用户", HttpStatus.NOT_FOUND);
         }

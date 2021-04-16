@@ -1,7 +1,9 @@
 package com.trace.platform.resource;
 
 import com.trace.platform.entity.Product;
+import com.trace.platform.entity.Stock;
 import com.trace.platform.repository.ProductRepository;
+import com.trace.platform.repository.StockRepository;
 import com.trace.platform.resource.dto.ProductCreateRequest;
 import com.trace.platform.resource.pojo.PageableRequest;
 import com.trace.platform.resource.pojo.PageableResponse;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/trace/product")
@@ -26,6 +29,8 @@ public class ProductResource {
 
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private StockRepository stockRepository;
 
     @Value("${platform.product.img-dir}")
     private String ImgDirUrl;
@@ -60,7 +65,20 @@ public class ProductResource {
         product.setImgDirUrl(path);
         product.setSubmitterId(productCreateRequest.getSubmitterId());
         product.setUnit(productCreateRequest.getUnit());
-        productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
+
+        String batchId = UUID.randomUUID().toString().replace("-","").toLowerCase();
+        Stock stock = new Stock();
+        stock.setAccountId(productCreateRequest.getSubmitterId());
+        stock.setProductId(savedProduct.getId());
+        stock.setBatchId(batchId);
+        stock.setDate(new Date());
+        stock.setPrice(productCreateRequest.getPrice());
+        stock.setQuantity(productCreateRequest.getQuantity());
+        stock.setStatus(Stock.FREE);
+
+        stockRepository.save(stock);
+
         return new ResponseEntity(HttpStatus.CREATED);
     }
 

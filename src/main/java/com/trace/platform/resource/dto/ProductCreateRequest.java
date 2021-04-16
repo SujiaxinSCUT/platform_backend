@@ -9,6 +9,8 @@ public class ProductCreateRequest {
     private MultipartFile[] images;
     private String unit;
     private Integer submitterId;
+    private double price;
+    private double quantity;
 
     public ProductCreateRequest() {
     }
@@ -51,5 +53,25 @@ public class ProductCreateRequest {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public void setSubmitterId(Integer submitterId) {
+        this.submitterId = submitterId;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public double getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(double quantity) {
+        this.quantity = quantity;
     }
 }
