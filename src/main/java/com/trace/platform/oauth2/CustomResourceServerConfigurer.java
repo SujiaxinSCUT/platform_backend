@@ -20,7 +20,7 @@ public class CustomResourceServerConfigurer extends ResourceServerConfigurerAdap
                 .and()
                 .authorizeRequests()
                 .antMatchers("/trace/account/**")
-                .hasAnyAuthority("ROLE_USER", "ROLE_ADMIN_FUND", "ROLE_ADMIN_QUALITY")
+                .authenticated()
                 .and()
                 .authorizeRequests()
                 .antMatchers("/trace/business/**")

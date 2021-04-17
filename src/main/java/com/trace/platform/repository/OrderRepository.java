@@ -44,4 +44,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
                                            @Param("start_date") Date startDate, @Param("end_date")Date endDate,
                                            @Param("product_name")String productName, Pageable pageable);
 
+    @Query(nativeQuery = true, value = "select * from system_order where supplier_name = :username or client_name = :username")
+    Page<Order> findByUsername(@Param("username") String username, Pageable pageable);
 }

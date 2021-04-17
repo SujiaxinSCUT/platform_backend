@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+
 @RestController
 @RequestMapping("/trace/account")
 public class AccountResource {
@@ -33,5 +36,11 @@ public class AccountResource {
         userDetails.setName(account.getName());
 
         return new ResponseEntity<UserDetails>(userDetails, HttpStatus.OK);
+    }
+
+    @GetMapping
+    public List<String> getAllUsername() {
+        List<String> usernames = accountRepository.findAllUsername();
+        return usernames;
     }
 }

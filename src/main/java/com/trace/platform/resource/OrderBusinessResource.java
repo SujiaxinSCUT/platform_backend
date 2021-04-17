@@ -28,7 +28,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/trace/business/order")
-public class OrderResource {
+public class OrderBusinessResource {
 
     @Autowired
     private AccountRepository accountRepository;
