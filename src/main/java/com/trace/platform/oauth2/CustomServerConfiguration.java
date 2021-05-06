@@ -29,7 +29,7 @@ public class CustomServerConfiguration extends AuthorizationServerConfigurerAdap
                 .authorizedGrantTypes("password","refresh_token")  //密码模式
                 .scopes("select")  //授权范围
                 .resourceIds(CustomResourceServerConfigurer.RESOURCE_ID)  //资源服务器的id，这个在资源服务器里有配置。
-                .accessTokenValiditySeconds(1800)  //有效时间
+                .accessTokenValiditySeconds(7200)  //有效时间
                 .refreshTokenValiditySeconds(50000)
                 .and()
                 .withClient("client_admin")  //客户端名称
@@ -37,7 +37,7 @@ public class CustomServerConfiguration extends AuthorizationServerConfigurerAdap
                 .authorizedGrantTypes("password","refresh_token")  //密码模式
                 .scopes("select")  //授权范围
                 .resourceIds(CustomResourceServerConfigurer.RESOURCE_ID)  //资源服务器的id，这个在资源服务器里有配置。
-                .accessTokenValiditySeconds(1800)  //有效时间
+                .accessTokenValiditySeconds(7200)  //有效时间
                 .refreshTokenValiditySeconds(50000);
     }
 

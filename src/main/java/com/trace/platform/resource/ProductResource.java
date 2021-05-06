@@ -1,7 +1,10 @@
 package com.trace.platform.resource;
 
+import com.trace.platform.entity.Account;
 import com.trace.platform.entity.Product;
+import com.trace.platform.entity.ProductMaterialRel;
 import com.trace.platform.entity.Stock;
+import com.trace.platform.repository.AccountRepository;
 import com.trace.platform.repository.ProductRepository;
 import com.trace.platform.repository.StockRepository;
 import com.trace.platform.resource.dto.ProductCreateRequest;
@@ -31,12 +34,15 @@ public class ProductResource {
     private ProductRepository productRepository;
     @Autowired
     private StockRepository stockRepository;
+    @Autowired
+    private AccountRepository accountRepository;
 
     @Value("${platform.product.img-dir}")
     private String ImgDirUrl;
 
     @PostMapping
     public ResponseEntity createProduct(ProductCreateRequest productCreateRequest) {
+        Account account = accountRepository.findByName(productCreateRequest.getSubmitterId());
         if (productRepository.findByName(productCreateRequest.getName()) != null) {
             return new ResponseEntity("已存在该产品", HttpStatus.CONFLICT);
         }
@@ -57,11 +63,12 @@ public class ProductResource {
                 return new ResponseEntity("保存产品图片失败",HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
+        Date date = new Date();
 
         Product product = new Product();
         product.setName(productCreateRequest.getName());
         product.setDescription(productCreateRequest.getDescription());
-        product.setDate(new Date());
+        product.setDate(date);
         product.setImgDirUrl(path);
         product.setSubmitterId(productCreateRequest.getSubmitterId());
         product.setUnit(productCreateRequest.getUnit());
@@ -75,11 +82,11 @@ public class ProductResource {
         stock.setDate(new Date());
         stock.setPrice(productCreateRequest.getPrice());
         stock.setQuantity(productCreateRequest.getQuantity());
-        stock.setStatus(Stock.FREE);
+        stock.setStatus(Stock.ON_SAVING);
 
-        stockRepository.save(stock);
+        Stock savedStock = stockRepository.save(stock);
 
-        return new ResponseEntity(HttpStatus.CREATED);
+        return new ResponseEntity(savedStock, HttpStatus.OK);
     }
 
     @GetMapping

@@ -1,18 +1,21 @@
 package com.trace.platform.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.trace.platform.repository.StockRepository;
 import com.trace.platform.resource.dto.ProductDetailsResponse;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IStockService;
-import org.apache.commons.lang.StringUtils;
+import com.trace.platform.service.dto.StockCreateRequest;
+import com.trace.platform.service.dto.StockCreateResponse;
+import com.trace.platform.utils.DateUtil;
+import org.hyperledger.fabric.sdk.FabricClient;
+import org.hyperledger.fabric.sdk.util.Responses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class StockServiceImpl implements IStockService {
@@ -21,8 +24,8 @@ public class StockServiceImpl implements IStockService {
     private StockRepository stockRepository;
 
     @Override
-    public PageableResponse<ProductDetailsResponse> getProductInStockPageable(int account_id, Pageable pageable) {
-        Page<Map<String, Object>> page = stockRepository.findProductInStockPageable(account_id, pageable);
+    public PageableResponse<ProductDetailsResponse> getProductInStockPageable(String account_name, Pageable pageable) {
+        Page<Map<String, Object>> page = stockRepository.findProductInStockPageable(account_name, pageable);
         List<Map<String, Object>> content = page.getContent();
         List<ProductDetailsResponse> list = new ArrayList<>();
 
@@ -52,7 +55,7 @@ public class StockServiceImpl implements IStockService {
     }
 
     @Override
-    public List<ProductDetailsResponse> getAllProductsInStock(int account_id) {
+    public List<ProductDetailsResponse> getAllProductsInStock(String account_id) {
         List<Map<String, Object>> mapList = stockRepository.findAllProductsInStock(account_id);
         List<ProductDetailsResponse> list = new ArrayList<>();
 
@@ -73,5 +76,31 @@ public class StockServiceImpl implements IStockService {
 
 
         return list;
+    }
+
+    @Override
+    public StockCreateResponse addStock(StockCreateRequest request) throws Exception {
+        FabricClient client = new FabricClient(request.getAccountName(),
+                request.getClientKey(), request.getClientCrt(), request.getServerCrt());
+        client.init();
+        List<String> formList = new ArrayList<String>();
+        Map<String, List<String>> maps = request.getForm();
+        if (maps != null) {
+            Set<String> keySet = maps.keySet();
+            for (String key : keySet) {
+                List<String> list = maps.get(key);
+                for (String batchId : list) {
+                    formList.add(key + batchId);
+                }
+            }
+        }
+        String formStr = JSON.toJSONString(formList);
+        Responses responses = client.addProducts(String.valueOf(request.getProductId()), request.getProductName(),
+                request.getUnit(), request.getBatchId(), formStr, DateUtil.toNormalizeString(request.getDate()));
+        StockCreateResponse response = new StockCreateResponse();
+        System.out.println("The response is: " + responses.getMessages());
+        response.setSuccess(responses.getCode() == 0);
+        response.setMessage(responses.getMessages());
+        return response;
     }
 }

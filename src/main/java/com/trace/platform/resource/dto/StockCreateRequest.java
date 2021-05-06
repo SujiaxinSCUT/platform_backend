@@ -2,20 +2,22 @@ package com.trace.platform.resource.dto;
 
 public class StockCreateRequest {
 
-    private int accountId;
+    private String accountName;
     private int productId;
+    private String unit;
     private double quantity;
     private double price;
 
     public StockCreateRequest() {
     }
 
-    public int getAccountId() {
-        return accountId;
+
+    public String getAccountName() {
+        return accountName;
     }
 
-    public void setAccountId(int accountId) {
-        this.accountId = accountId;
+    public void setAccountName(String accountName) {
+        this.accountName = accountName;
     }
 
     public int getProductId() {
@@ -40,5 +42,13 @@ public class StockCreateRequest {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 }

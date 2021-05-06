@@ -1,15 +1,12 @@
 package com.trace.platform.resource;
 
+import com.trace.platform.entity.Account;
 import com.trace.platform.entity.Order;
 import com.trace.platform.entity.OrderedProduct;
-import com.trace.platform.repository.AccountRepository;
-import com.trace.platform.repository.OrderRepository;
-import com.trace.platform.repository.OrderedProductRepository;
-import com.trace.platform.repository.ProductRepository;
+import com.trace.platform.entity.Stock;
+import com.trace.platform.repository.*;
 import com.trace.platform.repository.dto.OrderQueryBody;
-import com.trace.platform.resource.dto.OrderCreateRequest;
-import com.trace.platform.resource.dto.OrderQueryRequest;
-import com.trace.platform.resource.dto.OrderedProductResponse;
+import com.trace.platform.resource.dto.*;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 @RestController
@@ -40,6 +39,8 @@ public class OrderBusinessResource {
     private ProductRepository productRepository;
     @Autowired
     private IOrderService iOrderService;
+    @Autowired
+    private StockRepository stockRepository;
 
     @PostMapping
     public ResponseEntity createOrder(@RequestBody OrderCreateRequest orderCreateRequest) {
@@ -128,5 +129,51 @@ public class OrderBusinessResource {
         Pageable pageable = PageRequest.of(page, size);
         PageableResponse<Order> response = iOrderService.getOrderPageable(body, pageable);
         return response;
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity confirmOrder(OrderConfirmRequest request) {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        Account account = accountRepository.findByName(currentUsername);
+        Order order = orderRepository.findById(request.getOrderId()).get();
+        if (!order.getSupplierName().equalsIgnoreCase(currentUsername)) {
+            return new ResponseEntity("无权限操作此订单", HttpStatus.FORBIDDEN);
+        }
+        if (request.isValid()) {
+            List<SelectedBatches> batchesList = request.getSelectedBatchesList();
+            for (SelectedBatches batches : batchesList) {
+                Map<String, Double> map = batches.getBatches();
+                Set<String> key = map.keySet();
+                for (String batchId : key) {
+                    Stock stock = stockRepository.findByBatchId(batchId);
+                    if (stock == null || stock.getBatchId() == null) {
+                        return new ResponseEntity("不存在该批次库存", HttpStatus.NOT_FOUND);
+                    }
+                    if (stock.getStatus() == Stock.ON_TRANSACTION) {
+                        return new ResponseEntity("所选批次处于交易状态中：" + batchId, HttpStatus.CONFLICT);
+                    }
+                    if (stock.getQuantity() < map.get(batchId)) {
+                        return new ResponseEntity("所选批次数量不足：" + batchId, HttpStatus.CONFLICT);
+                    }
+                    //TODO
+                }
+                OrderedProduct orderedProduct = orderedProductRepository.findByProIdAndOrderId(batches.getProduct().getId(), request.getOrderId());
+                batches.setFundSign(orderedProduct.getFundSign());
+                batches.setProductSign(orderedProduct.getProductSign());
+            }
+            com.trace.platform.service.dto.OrderCreateRequest orderCreateRequest = new com.trace.platform.service.dto.OrderCreateRequest();
+            orderCreateRequest.setSenderId(order.getSupplierName());
+            orderCreateRequest.setRcvId(order.getClientName());
+            orderCreateRequest.setSelectedBatchesList(batchesList);
+            orderCreateRequest.setOrder(order);
+            orderCreateRequest.setClientKey(request.getClientKey());
+            orderCreateRequest.setClientCrt(request.getClientCrt());
+            orderCreateRequest.setServerCrt(account.getCertificate());
+            iOrderService.createOrder(orderCreateRequest);
+        } else {
+            order.setStatus(Order.Status.INVALID);
+            orderRepository.save(order);
+        }
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

@@ -2,13 +2,16 @@ package com.trace.platform.resource.dto;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
+
 public class ProductCreateRequest {
 
     private String name;
     private String description;
     private MultipartFile[] images;
     private String unit;
-    private Integer submitterId;
+    private String submitterId;
     private double price;
     private double quantity;
 
@@ -39,11 +42,11 @@ public class ProductCreateRequest {
         this.images = images;
     }
 
-    public int getSubmitterId() {
+    public String getSubmitterId() {
         return submitterId;
     }
 
-    public void setSubmitterId(int submitterId) {
+    public void setSubmitterId(String submitterId) {
         this.submitterId = submitterId;
     }
 
@@ -53,10 +56,6 @@ public class ProductCreateRequest {
 
     public void setUnit(String unit) {
         this.unit = unit;
-    }
-
-    public void setSubmitterId(Integer submitterId) {
-        this.submitterId = submitterId;
     }
 
     public double getPrice() {

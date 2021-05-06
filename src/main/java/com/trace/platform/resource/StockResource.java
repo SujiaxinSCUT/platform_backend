@@ -1,25 +1,32 @@
 package com.trace.platform.resource;
 
 import com.trace.platform.entity.Account;
+import com.trace.platform.entity.ProductMaterialRel;
 import com.trace.platform.entity.Stock;
 import com.trace.platform.repository.AccountRepository;
+import com.trace.platform.repository.ProductMaterialRelRepository;
 import com.trace.platform.repository.ProductRepository;
 import com.trace.platform.repository.StockRepository;
+import com.trace.platform.resource.dto.FormedBatch;
 import com.trace.platform.resource.dto.ProductDetailsResponse;
 import com.trace.platform.resource.dto.StockCreateRequest;
+import com.trace.platform.resource.dto.StockSaveRequest;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IStockService;
+import com.trace.platform.service.dto.StockCreateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 @RestController
 @RequestMapping("/trace/business/stock")
@@ -35,11 +42,15 @@ public class StockResource {
     private ProductRepository productRepository;
 
     @Autowired
+    private ProductMaterialRelRepository productMaterialRelRepository;
+
+    @Autowired
     private IStockService iStockService;
 
     @PostMapping
     public ResponseEntity createStock(StockCreateRequest stockCreateRequest) {
-        if (!accountRepository.findById(stockCreateRequest.getAccountId()).isPresent()) {
+        Account account = accountRepository.findByName(stockCreateRequest.getAccountName());
+        if (account == null) {
             return new ResponseEntity("不存在该用户", HttpStatus.NOT_FOUND);
         }
         if (!productRepository.findById(stockCreateRequest.getProductId()).isPresent()) {
@@ -47,42 +58,157 @@ public class StockResource {
         }
 
         String batchId = UUID.randomUUID().toString().replace("-","").toLowerCase();
+        Date date = new Date();
         Stock stock = new Stock();
-        stock.setAccountId(stockCreateRequest.getAccountId());
+        stock.setAccountId(stockCreateRequest.getAccountName());
         stock.setProductId(stockCreateRequest.getProductId());
         stock.setBatchId(batchId);
-        stock.setDate(new Date());
+        stock.setDate(date);
         stock.setPrice(stockCreateRequest.getPrice());
         stock.setQuantity(stockCreateRequest.getQuantity());
-        stock.setStatus(Stock.FREE);
+        stock.setStatus(Stock.ON_SAVING);
 
-        stockRepository.save(stock);
-        return new ResponseEntity(HttpStatus.CREATED);
+        Stock savedStock = stockRepository.save(stock);
+        return new ResponseEntity(savedStock, HttpStatus.OK);
     }
+
+    @PostMapping("/save")
+    @Transactional
+    public ResponseEntity saveStock(@RequestBody StockSaveRequest stockSaveRequest) {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        Account account = accountRepository.findByName(currentUsername);
+        Stock stock = stockSaveRequest.getStock();
+
+        List<FormedBatch> batchList = stockSaveRequest.getBatchList();
+        Map<String, List<String>> form = new HashMap<>();
+        for (FormedBatch batch : batchList) {
+            Set<String> keySet = batch.getBatchesNumMap().keySet();
+            List<String> batches = new ArrayList<>(keySet);
+            form.put(batch.getProductName(), batches);
+        }
+
+        com.trace.platform.service.dto.StockCreateRequest request = new com.trace.platform.service.dto.StockCreateRequest();
+        request.setAccountName(currentUsername);
+        request.setBatchId(stock.getBatchId());
+        request.setDate(stock.getDate());
+        request.setForm(form);
+        request.setProductId(stock.getProductId());
+        request.setProductName(stockSaveRequest.getProductName());
+        request.setUnit(stockSaveRequest.getUnit());
+        request.setQuantity(stock.getQuantity());
+        request.setClientCrt(stockSaveRequest.getClientCrt());
+        request.setClientKey(stockSaveRequest.getClientKey());
+
+        StockCreateResponse response = null;
+        try {
+            request.setServerCrt(new String(Files.readAllBytes(Paths.get(account.getCertificate()))));
+            response = iStockService.addStock(request);
+        } catch (Exception e) {
+            e.printStackTrace();
+            stock.setStatus(Stock.FAILED_SAVING);
+            stockRepository.save(stock);
+            return new ResponseEntity(HttpStatus.EXPECTATION_FAILED);
+        }
+
+        if (response != null && response.isSuccess()) {
+            stock.setStatus(Stock.FREE);
+            stockRepository.save(stock);
+
+            for (FormedBatch batch : batchList) {
+                Set<String> keySet = batch.getBatchesNumMap().keySet();
+                for (String key : keySet) {
+                    ProductMaterialRel productMaterialRel = new ProductMaterialRel();
+                    productMaterialRel.setProductName(stockSaveRequest.getProductName());
+                    productMaterialRel.setProductBatchId(stock.getBatchId());
+                    productMaterialRel.setMaterialName(batch.getProductName());
+                    productMaterialRel.setMaterialBatchId(key);
+                    productMaterialRel.setProductQuantity(stock.getQuantity());
+                    productMaterialRel.setMaterialQuantity(batch.getBatchesNumMap().get(key));
+                    productMaterialRel.setDate(stock.getDate());
+                    productMaterialRel.setAccountName(stock.getAccountId());
+                    productMaterialRelRepository.save(productMaterialRel);
+
+                    Stock materialStock = stockRepository.findByBatchId(key);
+                    materialStock.setQuantity(materialStock.getQuantity() - batch.getBatchesNumMap().get(key));
+                    stockRepository.save(materialStock);
+                }
+            }
+
+            return new ResponseEntity(response.getMessage(), HttpStatus.OK);
+        } else {
+            stock.setStatus(Stock.FAILED_SAVING);
+            stockRepository.save(stock);
+        }
+
+        return new ResponseEntity(HttpStatus.EXPECTATION_FAILED);
+    }
+
 
     @GetMapping("/pageable/{page}/{size}")
     public PageableResponse<ProductDetailsResponse> getProductInStockPageable(
             @PathVariable("page")int page, @PathVariable("size") int size) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
-        Account currentUser = accountRepository.findByName(currentUsername);
         Pageable pageable = PageRequest.of(page, size);
-        PageableResponse<ProductDetailsResponse> response = iStockService.getProductInStockPageable(currentUser.getId(), pageable);
+        PageableResponse<ProductDetailsResponse> response = iStockService.getProductInStockPageable(currentUsername, pageable);
         return response;
     }
 
     @GetMapping("/product_id/{product_id}")
     public ResponseEntity getStockByProductIdAndAccountId(@PathVariable("product_id") int product_id) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
-        Account currentUser = accountRepository.findByName(currentUsername);
-        List<Stock> stockList = stockRepository.findAllByAccountIdAndProductId(currentUser.getId(), product_id);
+        List<Stock> stockList = stockRepository.findAllByAccountIdAndProductId(currentUsername, product_id);
         return new ResponseEntity(stockList, HttpStatus.OK);
+    }
+
+    @GetMapping("/product_id/{product_id}/pageable/{page}/{size}")
+    public PageableResponse<Stock> getStockByProductIdAndAccountIdPageable(@PathVariable("page")int page,
+                                                                  @PathVariable("size") int size,
+                                                                  @PathVariable("product_id") int product_id) {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Stock> stockPage = stockRepository.findByAccountIdAndProductIdPageable(currentUsername, product_id, pageable);
+
+        PageableResponse<Stock> response = new PageableResponse<>();
+        response.setPage(stockPage.getNumber());
+        response.setSize(stockPage.getSize());
+        response.setTotalElements(stockPage.getTotalElements());
+        response.setTotalPages(stockPage.getTotalPages());
+        response.setContents(stockPage.getContent());
+
+        return response;
     }
 
     @GetMapping
     public ResponseEntity getAllProductInStock() {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
-        Account currentUser = accountRepository.findByName(currentUsername);
-        List<ProductDetailsResponse> productDetailsResponseList = iStockService.getAllProductsInStock(currentUser.getId());
+        List<ProductDetailsResponse> productDetailsResponseList = iStockService.getAllProductsInStock(currentUsername);
         return new ResponseEntity(productDetailsResponseList, HttpStatus.OK);
+    }
+
+
+    @GetMapping("/material/product_name/{product_name}")
+    public List<ProductMaterialRel> getProductMaterialAll(@PathVariable("product_name")String productName) {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        return productMaterialRelRepository.findByProductIdAll(productName, currentUsername);
+    }
+
+    @GetMapping("/material/product_name/{product_name}/type/{type}/pageable/{page}/{size}")
+    public PageableResponse<ProductMaterialRel> getProductMaterialPageable(
+            @PathVariable("page")int page, @PathVariable("size") int size, 
+            @PathVariable("product_name")String productName, @PathVariable("type") int type) {
+        Pageable pageable = PageRequest.of(page, size);
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        Page<ProductMaterialRel> pages = type == 1
+                ? productMaterialRelRepository.findByProductIdPageable(productName, currentUsername, pageable)
+                : productMaterialRelRepository.findByMaterialIdPageable(productName, currentUsername, pageable);
+
+        PageableResponse<ProductMaterialRel> response = new PageableResponse<>();
+        response.setPage(pages.getNumber());
+        response.setSize(pages.getSize());
+        response.setTotalElements(pages.getTotalElements());
+        response.setTotalPages(pages.getTotalPages());
+        response.setContents(pages.getContent());
+
+        return response;
     }
 }

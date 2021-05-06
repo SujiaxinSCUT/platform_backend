@@ -9,12 +9,14 @@ import java.util.Date;
 @NamedQuery(name="Stock.findAll", query="SELECT s FROM Stock s")
 public class Stock implements Serializable {
 
+    public static final String ON_SAVING = "on_saving";
+    public static final String FAILED_SAVING = "failed_saving";
     public static final String FREE = "free";
     public static final String ON_TRANSACTION = "on_transaction";
 
     private static final long serialVersionUID = 1L;
     private int id;
-    private int accountId;
+    private String accountId;
     private int productId;
     private String batchId;
     private Date date;
@@ -34,11 +36,11 @@ public class Stock implements Serializable {
     }
 
     @Column(nullable=false, name = "account_id")
-    public int getAccountId() {
+    public String getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(int accountId) {
+    public void setAccountId(String accountId) {
         this.accountId = accountId;
     }
     @Column(nullable=false, name = "product_id")

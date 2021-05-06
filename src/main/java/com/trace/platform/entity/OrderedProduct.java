@@ -21,6 +21,10 @@ public class OrderedProduct implements Serializable {
     private double quantity;
     @Column(nullable=false, name = "price")
     private double price;
+    @Column(nullable = true, name = "product_sign")
+    private String productSign;
+    @Column(nullable = true, name = "fund_sign")
+    private String fundSign;
 
     public int getId() {
         return id;
@@ -60,5 +64,21 @@ public class OrderedProduct implements Serializable {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public String getProductSign() {
+        return productSign;
+    }
+
+    public void setProductSign(String productSign) {
+        this.productSign = productSign;
+    }
+
+    public String getFundSign() {
+        return fundSign;
+    }
+
+    public void setFundSign(String fundSign) {
+        this.fundSign = fundSign;
     }
 }

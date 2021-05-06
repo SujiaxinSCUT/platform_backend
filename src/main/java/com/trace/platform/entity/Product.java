@@ -15,7 +15,7 @@ public class Product implements Serializable {
     private String unit;
     private String description;
     private String imgDirUrl;
-    private int submitterId;
+    private String submitterId;
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
@@ -65,11 +65,11 @@ public class Product implements Serializable {
     }
 
     @Column(nullable = false, name = "submitter_id")
-    public int getSubmitterId() {
+    public String getSubmitterId() {
         return submitterId;
     }
 
-    public void setSubmitterId(int submitterId) {
+    public void setSubmitterId(String submitterId) {
         this.submitterId = submitterId;
     }
 
