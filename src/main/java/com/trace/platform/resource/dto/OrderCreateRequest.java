@@ -8,10 +8,18 @@ import java.util.List;
 public class OrderCreateRequest {
 
     private String supplierName;
-    private Date date;
     private List<OrderedProduct> products;
+    private String privateKey;
 
     public OrderCreateRequest() {
+    }
+
+    public String getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = privateKey;
     }
 
     public String getSupplierName() {
@@ -20,14 +28,6 @@ public class OrderCreateRequest {
 
     public void setSupplierName(String supplierName) {
         this.supplierName = supplierName;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
     }
 
     public List<OrderedProduct> getProducts() {

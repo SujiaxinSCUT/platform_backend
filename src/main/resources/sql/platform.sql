@@ -13,42 +13,27 @@ CREATE TABLE `account` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `certificate` text NOT NULL,
+  `certificate` varchar(255) NOT NULL,
+  `pub_key` varchar(255) NOT NULL,
   `verified` boolean DEFAULT NULL,
   `permission` varchar(255) DEFAULT NULL,
   `date` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `account` values(1, "user1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
-INSERT INTO `account` values(2, "user2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
-INSERT INTO `account` values(3, "admin1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_ADMIN_FUND", "2017-3-16");
-INSERT INTO `account` values(4, "admin2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_ADMIN_QUALITY", "2017-3-16");
-INSERT INTO `account` values(5, "admin3", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_ADMIN_FUND ROLE_ADMIN_QUALITY", "2017-3-16");
+INSERT INTO `account` values(1, "user1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
+INSERT INTO `account` values(2, "user2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
+INSERT INTO `account` values(3, "admin1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", "2fsli3jf", false, "ROLE_ADMIN_FUND", "2017-3-16");
+INSERT INTO `account` values(4, "admin2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", "2fsli3jf", false, "ROLE_ADMIN_QUALITY", "2017-3-16");
+INSERT INTO `account` values(5, "admin3", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", "2fsli3jf", false, "ROLE_ADMIN_FUND ROLE_ADMIN_QUALITY", "2017-3-16");
 
-INSERT INTO `account` values(6, "Mp1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "-----BEGIN CERTIFICATE-----
-MIICcjCCAhmgAwIBAgIQE1YzNASlHLrn7hXdXQRxtzAKBggqhkjOPQQDAjB8MQsw
-CQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2FuIEZy
-YW5jaXNjbzEcMBoGA1UEChMTb3JnTXAxYS5leGFtcGxlLmNvbTEiMCAGA1UEAxMZ
-dGxzY2Eub3JnTXAxYS5leGFtcGxlLmNvbTAeFw0yMTAzMjQwMjUwMDBaFw0zMTAz
-MjIwMjUwMDBaMF4xCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYw
-FAYDVQQHEw1TYW4gRnJhbmNpc2NvMSIwIAYDVQQDExlwZWVyMC5vcmdNcDFhLmV4
-YW1wbGUuY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDomgcj5NQc5ENwKn
-Ykr45oOK8k03EmRfVuK8ZdxzS7dzu3rUgs6hThNDUZ8S9AVlpwH3FYd7/dK51LF7
-o33we6OBmjCBlzAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEG
-CCsGAQUFBwMCMAwGA1UdEwEB/wQCMAAwKwYDVR0jBCQwIoAgawlCrViHXbC1ghPu
-IYpa8gZiGVcXQCXSmuCIUAsC9ocwKwYDVR0RBCQwIoIZcGVlcjAub3JnTXAxYS5l
-eGFtcGxlLmNvbYIFcGVlcjAwCgYIKoZIzj0EAwIDRwAwRAIgWOOB8G2qlkJpCKCs
-iHTsSq3Pf0N3+cIlZaNVIp1j05kCIAgCu/kU9JCtBT2xyb7Igh1njajqAXK/TQhW
-0cs9Txa0
------END CERTIFICATE-----
-", false, "ROLE_USER", "2017-3-16");
+INSERT INTO `account` values(6, "Mp1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "D://Desktop//keyAndCertFile//Mp1//server.crt", "D://Desktop//keys//Mp1//publicKey.pem", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(2, "Mp2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(3, "Mp3", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
-INSERT INTO `account` values(7, "Mm1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "D://Desktop//keyAndCertFile//Mm1//server.crt", false, "ROLE_USER", "2017-3-16");
+INSERT INTO `account` values(7, "Mm1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "D://Desktop//keyAndCertFile//Mm1//server.crt",  "D://Desktop//keys//Mm1//publicKey.pem", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(5, "Mm2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(1, "Mm3", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
-INSERT INTO `account` values(8, "Mr1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "D://Desktop//keyAndCertFile//Mr1//server.crt", false, "ROLE_USER", "2017-3-16");
+INSERT INTO `account` values(8, "Mr1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "D://Desktop//keyAndCertFile//Mr1//server.crt",  "D://Desktop//keys//Mr1//publicKey.pem", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(3, "Mr2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(3, "Mr3", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
 

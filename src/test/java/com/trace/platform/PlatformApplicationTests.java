@@ -6,8 +6,10 @@ import com.starkbank.ellipticcurve.Ecdsa;
 import com.starkbank.ellipticcurve.PrivateKey;
 import com.starkbank.ellipticcurve.PublicKey;
 import com.starkbank.ellipticcurve.Signature;
+import com.trace.platform.entity.Account;
 import com.trace.platform.entity.Order;
 import com.trace.platform.entity.Product;
+import com.trace.platform.repository.AccountRepository;
 import com.trace.platform.resource.dto.SelectedBatches;
 import com.trace.platform.service.IOrderService;
 import com.trace.platform.service.dto.OrderCreateRequest;
@@ -16,6 +18,9 @@ import com.trace.platform.utils.DateUtil;
 import org.hyperledger.fabric.sdk.FabricClient;
 import org.hyperledger.fabric.sdk.util.Responses;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.stereotype.Component;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.io.IOException;
@@ -25,6 +30,7 @@ import java.text.ParseException;
 import java.util.*;
 
 @ContextConfiguration
+@SpringBootTest(classes = PlatformApplication.class)
 class PlatformApplicationTests {
 
 
@@ -37,6 +43,9 @@ class PlatformApplicationTests {
 	String client_id = "Mp1";
 
 	FabricClient client = null;
+
+	@Autowired
+	private AccountRepository accountRepository;
 
 	int proId = 2;
 
@@ -250,5 +259,11 @@ class PlatformApplicationTests {
 		request.setSelectedBatchesList(batchesList);
 
 		iOrderService.createOrder(request);
+	}
+
+	@Test
+	void getCertificate() {
+		Account account = accountRepository.findByName("Mp1");
+		System.out.println(account.getCertificate());
 	}
 }

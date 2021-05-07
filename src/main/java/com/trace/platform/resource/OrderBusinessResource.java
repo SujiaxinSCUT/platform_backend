@@ -1,14 +1,17 @@
 package com.trace.platform.resource;
 
-import com.trace.platform.entity.Account;
-import com.trace.platform.entity.Order;
-import com.trace.platform.entity.OrderedProduct;
-import com.trace.platform.entity.Stock;
+import com.alibaba.fastjson.JSONObject;
+import com.starkbank.ellipticcurve.Ecdsa;
+import com.starkbank.ellipticcurve.PrivateKey;
+import com.starkbank.ellipticcurve.PublicKey;
+import com.starkbank.ellipticcurve.Signature;
+import com.trace.platform.entity.*;
 import com.trace.platform.repository.*;
 import com.trace.platform.repository.dto.OrderQueryBody;
 import com.trace.platform.resource.dto.*;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IOrderService;
+import com.trace.platform.utils.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +22,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -49,27 +55,75 @@ public class OrderBusinessResource {
         }
 
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        Date now = new Date();
+
         if (currentUsername.equalsIgnoreCase(orderCreateRequest.getSupplierName())) {
             return new ResponseEntity("不允许与自己交易", HttpStatus.CONFLICT);
         }
-        if (orderRepository.findOne(currentUsername, orderCreateRequest.getSupplierName(), orderCreateRequest.getDate()) != null) {
+        if (orderRepository.findOne(currentUsername, orderCreateRequest.getSupplierName(), now) != null) {
             return new ResponseEntity("已存在该订单", HttpStatus.CONFLICT);
+        }
+
+        List<OrderedProduct> orderedProducts = orderCreateRequest.getProducts();
+        for (OrderedProduct orderedProduct : orderedProducts) {
+            Product product = productRepository.findById(orderedProduct.getProductId()).get();
+            if (product == null) {
+                return new ResponseEntity("不存在该产品" + orderedProduct.getId(), HttpStatus.NOT_FOUND);
+            }
+            PrivateKey key = null;
+            try {
+                key = PrivateKey.fromPem(orderCreateRequest.getPrivateKey());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new ResponseEntity("私钥有误", HttpStatus.CONFLICT);
+            }
+            JSONObject proTrade= new JSONObject();
+
+            proTrade.put("send", orderCreateRequest.getSupplierName());
+            proTrade.put("reci", currentUsername);
+            proTrade.put("proId", String.valueOf(orderedProduct.getProductId()));
+            proTrade.put("proName", product.getName());
+            proTrade.put("quantity", String.valueOf(orderedProduct.getQuantity()));
+            proTrade.put("proUnit", product.getUnit());
+            proTrade.put("date", DateUtil.toNormalizeString(now));
+            Signature signaturePro1 = Ecdsa.sign(JSONObject.toJSONString(proTrade), key);
+            String proSign = new String(signaturePro1.toBase64().getBytes());
+
+            Account account = accountRepository.findByName(currentUsername);
+            PublicKey publicKey = null;
+            try {
+                publicKey = PublicKey.fromPem(new String(Files.readAllBytes(Paths.get(account.getPubKey()))));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (!Ecdsa.verify(JSONObject.toJSONString(proTrade), signaturePro1, publicKey)) {
+                return new ResponseEntity("签名有误，请检查密钥是否正确", HttpStatus.CONFLICT);
+            }
+
+            JSONObject fundsTrade= new JSONObject();
+            fundsTrade.put("send", orderCreateRequest.getSupplierName());
+            fundsTrade.put("reci", currentUsername);
+            fundsTrade.put("proId", String.valueOf(orderedProduct.getProductId()));
+            fundsTrade.put("proName", product.getName());
+            fundsTrade.put("unitPrice", String.valueOf(orderedProduct.getPrice()));
+            fundsTrade.put("totalPrice", String.valueOf(orderedProduct.getQuantity() * orderedProduct.getPrice()));
+            fundsTrade.put("date", DateUtil.toNormalizeString(now));
+
+            Signature signaturePro2 = Ecdsa.sign(JSONObject.toJSONString(fundsTrade), key);
+            String fundsSign = new String(signaturePro2.toBase64().getBytes());
+
+            orderedProduct.setFundSign(fundsSign);
+            orderedProduct.setProductSign(proSign);
         }
         Order order = new Order();
         order.setClientName(currentUsername);
         order.setSupplierName(orderCreateRequest.getSupplierName());
         order.setStatus(Order.Status.CONFIRMING);
-        order.setDate(orderCreateRequest.getDate());
+        order.setDate(now);
 
         Order savedOrder = orderRepository.save(order);
-//        orderRepository.insert(currentUsername, orderCreateRequest.getSupplierName(), Order.Status.CONFIRMING, orderCreateRequest.getDate());
-//        Order savedOrder = orderRepository.findOne(currentUsername, orderCreateRequest.getSupplierName(), orderCreateRequest.getDate());
 
-        List<OrderedProduct> orderedProducts = orderCreateRequest.getProducts();
         for (OrderedProduct orderedProduct : orderedProducts) {
-            if (productRepository.findById(orderedProduct.getProductId()) == null) {
-                return new ResponseEntity("不存在该产品" + orderedProduct.getId(), HttpStatus.NOT_FOUND);
-            }
             orderedProduct.setOrderId(savedOrder.getId());
         }
         orderedProductRepository.saveAll(orderedProducts);
@@ -168,7 +222,11 @@ public class OrderBusinessResource {
             orderCreateRequest.setOrder(order);
             orderCreateRequest.setClientKey(request.getClientKey());
             orderCreateRequest.setClientCrt(request.getClientCrt());
-            orderCreateRequest.setServerCrt(account.getCertificate());
+            try {
+                orderCreateRequest.setServerCrt(new String(Files.readAllBytes(Paths.get(account.getCertificate()))));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             iOrderService.createOrder(orderCreateRequest);
         } else {
             order.setStatus(Order.Status.INVALID);

@@ -19,6 +19,7 @@ public class Account implements Serializable {
     private String password;
     private String permission;
     private String certificate;
+    private String pubKey;
     private boolean verified;
 
     public Account() {}
@@ -86,4 +87,12 @@ public class Account implements Serializable {
         this.certificate = certificate;
     }
 
+    @Column(name = "pub_key")
+    public String getPubKey() {
+        return pubKey;
+    }
+
+    public void setPubKey(String pubKey) {
+        this.pubKey = pubKey;
+    }
 }
