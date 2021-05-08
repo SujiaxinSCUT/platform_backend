@@ -30,7 +30,6 @@ import java.text.ParseException;
 import java.util.*;
 
 @ContextConfiguration
-@SpringBootTest(classes = PlatformApplication.class)
 class PlatformApplicationTests {
 
 

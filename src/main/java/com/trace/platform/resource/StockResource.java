@@ -178,10 +178,9 @@ public class StockResource {
         return response;
     }
 
-    @GetMapping
-    public ResponseEntity getAllProductInStock() {
-        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
-        List<ProductDetailsResponse> productDetailsResponseList = iStockService.getAllProductsInStock(currentUsername);
+    @GetMapping("/account_name/{account_name}")
+    public ResponseEntity getAllProductInStock(@PathVariable("account_name") String accountName) {
+        List<ProductDetailsResponse> productDetailsResponseList = iStockService.getAllProductsInStock(accountName);
         return new ResponseEntity(productDetailsResponseList, HttpStatus.OK);
     }
 
