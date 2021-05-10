@@ -111,7 +111,7 @@ class PlatformApplicationTests {
 			proTrade.put("proName", "b");
 			proTrade.put("quantity", "100");
 			proTrade.put("proUnit", "kg");
-			proTrade.put("date", "2021-03-02 22:18".substring(0, 10));
+			proTrade.put("date", "2021-03-01 22:11".substring(0, 10));
 			Signature signaturePro1 = Ecdsa.sign(JSONObject.toJSONString(proTrade), key);
 			String proSign = new String(signaturePro1.toBase64().getBytes());
 
@@ -121,7 +121,7 @@ class PlatformApplicationTests {
 			proTradeObject.put("proUnit", "kg");
 			proTradeObject.put("bathId", "202104282230000006");
 			proTradeObject.put("quantity", "100");
-			proTradeObject.put("date", "2021-03-02 22:18");
+			proTradeObject.put("date", "2021-03-01 22:11");
 			proTradeObject.put("sign", proSign);
 			String proTradeJson = JSONObject.toJSONString(proTradeObject);
 
@@ -132,7 +132,7 @@ class PlatformApplicationTests {
 			fundsTrade.put("proName", "b");
 			fundsTrade.put("unitPrice", "1000");
 			fundsTrade.put("totalPrice", "100000");
-			fundsTrade.put("date", "2021-03-02 22:18".substring(0, 10));
+			fundsTrade.put("date", "2021-03-01 22:11".substring(0, 10));
 
 			Signature signaturePro2 = Ecdsa.sign(JSONObject.toJSONString(fundsTrade), key);
 			String fundsSign =new String(signaturePro2.toBase64().getBytes());
@@ -144,11 +144,11 @@ class PlatformApplicationTests {
 			fundsTradeObject.put("proName", "b");
 			fundsTradeObject.put("unitPrice", "1000");
 			fundsTradeObject.put("totalPrice", "100000");
-			fundsTradeObject.put("date", "2021-03-02 22:18");
+			fundsTradeObject.put("date", "2021-03-01 22:11");
 			fundsTradeObject.put("sign", fundsSign);
 			String fundsTradeJson = JSONObject.toJSONString(fundsTradeObject);
 
-			Responses responses = client.sendTrade("Mm1", "0000016", proTradeJson, fundsTradeJson, "2021043019301121");
+			Responses responses = client.sendTrade("Mm1", "00000010", proTradeJson, fundsTradeJson, "20210430193011200");
 			System.out.println("The message of response is " + responses.getMessages());
 		}
 	}
@@ -174,28 +174,6 @@ class PlatformApplicationTests {
 	}
 
 	@Test
-	void hmac() throws IOException {
-		JSONObject proTrade= new JSONObject();
-		proTrade.put("send", "Mp1");
-		proTrade.put("reci", "Mm1");
-		proTrade.put("proId", "001");
-		proTrade.put("proName", "b");
-		proTrade.put("quantity", "100");
-		proTrade.put("proUnit", "kg");
-		proTrade.put("date", "2021-03-07 20:18".substring(0, 10));
-		String keyFileStr = new String(Files.readAllBytes(Paths.get("D://Desktop//keys//Mr1//privateKey.pem")));
-		String publicKeyFileStr = new String(Files.readAllBytes(Paths.get("D://Desktop//keys//Mr1//publicKey.pem")));
-		PrivateKey key = PrivateKey.fromPem(keyFileStr);
-		PublicKey publicKey = PublicKey.fromPem(publicKeyFileStr);
-		Signature signaturePro1 = Ecdsa.sign("test", key);
-		String proSign = new String(signaturePro1.toBase64().getBytes());
-
-
-		String originStr = new String(Base64.getDecoder().decode(proSign));
-//		System.out.println(Ecdsa.verify(JSONObject.toJSONString(proTrade), signaturePro1, publicKey));
-	}
-
-	@Test
 	void service() throws IOException, ParseException {
 		IOrderService iOrderService = new OrderServiceImpl();
 		OrderCreateRequest request = new OrderCreateRequest();
@@ -208,8 +186,9 @@ class PlatformApplicationTests {
 		request.setClientKey(keyFile);
 		request.setServerCrt(pemFile);
 		Order order = new Order();
-		order.setId(1);
-		order.setDate(DateUtil.strToDate("2021-03-10 20:18"));
+		order.setId(11);
+		Date now = new Date();
+		order.setDate(now);
 
 		request.setOrder(order);
 		SelectedBatches batches = new SelectedBatches();
@@ -227,9 +206,9 @@ class PlatformApplicationTests {
 		proTrade.put("reci", "Mm1");
 		proTrade.put("proId", "2");
 		proTrade.put("proName", "b");
-		proTrade.put("quantity", String.valueOf(100.0));
+		proTrade.put("quantity", String.valueOf((double) 100));
 		proTrade.put("proUnit", "kg");
-		proTrade.put("date", "2021-03-10 20:18".substring(0,10));
+		proTrade.put("date", DateUtil.toNormalizeString(now).substring(0,10));
 		Signature signaturePro1 = Ecdsa.sign(JSONObject.toJSONString(proTrade), key);
 		String proSign = new String(signaturePro1.toBase64().getBytes());
 
@@ -238,9 +217,9 @@ class PlatformApplicationTests {
 		fundsTrade.put("reci", "Mm1");
 		fundsTrade.put("proId", "2");
 		fundsTrade.put("proName", "b");
-		fundsTrade.put("unitPrice", "1000");
-		fundsTrade.put("totalPrice", "100000");
-		fundsTrade.put("date", "2021-03-10 20:18".substring(0,10));
+		fundsTrade.put("unitPrice", String.valueOf((double) 1000));
+		fundsTrade.put("totalPrice", String.valueOf((double) 1000 * (double) 100));
+		fundsTrade.put("date", DateUtil.toNormalizeString(now).substring(0,10));
 
 		Signature signaturePro2 = Ecdsa.sign(JSONObject.toJSONString(fundsTrade), key);
 		String fundsSign =new String(signaturePro2.toBase64().getBytes());

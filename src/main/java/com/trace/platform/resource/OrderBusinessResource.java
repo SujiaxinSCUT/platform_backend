@@ -85,7 +85,7 @@ public class OrderBusinessResource {
             proTrade.put("proName", product.getName());
             proTrade.put("quantity", String.valueOf(orderedProduct.getQuantity()));
             proTrade.put("proUnit", product.getUnit());
-            proTrade.put("date", DateUtil.toNormalizeString(now));
+            proTrade.put("date", DateUtil.toNormalizeString(now).substring(0, 10));
             Signature signaturePro1 = Ecdsa.sign(JSONObject.toJSONString(proTrade), key);
             String proSign = new String(signaturePro1.toBase64().getBytes());
 
@@ -107,7 +107,7 @@ public class OrderBusinessResource {
             fundsTrade.put("proName", product.getName());
             fundsTrade.put("unitPrice", String.valueOf(orderedProduct.getPrice()));
             fundsTrade.put("totalPrice", String.valueOf(orderedProduct.getQuantity() * orderedProduct.getPrice()));
-            fundsTrade.put("date", DateUtil.toNormalizeString(now));
+            fundsTrade.put("date", DateUtil.toNormalizeString(now).substring(0, 10));
 
             Signature signaturePro2 = Ecdsa.sign(JSONObject.toJSONString(fundsTrade), key);
             String fundsSign = new String(signaturePro2.toBase64().getBytes());
@@ -233,5 +233,29 @@ public class OrderBusinessResource {
             orderRepository.save(order);
         }
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @GetMapping("/personal")
+    public PersonalOrderResponse getPersonalOrderDetail() {
+        Pageable pageable = PageRequest.of(0, 5);
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        Page<Order> orders = orderRepository.findByUsername(currentUsername, pageable);
+
+        int confirmingOrderNum = orderRepository.findCountOfConfirmingOrder(currentUsername);
+        Page<Order> confirmingOrders = orderRepository.findBySupplierIdAndStatus(currentUsername, Order.Status.CONFIRMING,
+                PageRequest.of(0, confirmingOrderNum > 0 ? confirmingOrderNum : 1));
+
+        int checkingOrderNum = orderRepository.findCountOfCheckingOrder(currentUsername);
+        int invalidOrderNum = orderRepository.findCountOfInvalidOrder(currentUsername);
+
+        PersonalOrderResponse response = new PersonalOrderResponse();
+        response.setConfirmingOrders(confirmingOrders.getContent());
+        response.setRecentOrders(orders.getContent());
+        response.setCheckingOrderNum(checkingOrderNum);
+        response.setInvalidOrderNum(invalidOrderNum);
+        response.setConfirmingOrderNum(confirmingOrderNum);
+        response.setTotalOrderNum(orders.getTotalElements());
+
+        return response;
     }
 }

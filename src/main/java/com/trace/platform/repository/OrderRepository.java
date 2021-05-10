@@ -37,13 +37,26 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             "and if(:client_match_name != '', client_name like %:client_match_name%, 1 = 1) " +
             "and if(:start_date != '', system_order.date > :start_date, 1 = 1 ) " +
             "and if(:end_date != '', system_order.date < :end_date, 1 = 1 ) " +
-            "and if(:product_name != '', product.name like %:product_name%, 1 = 1) ",
+            "and if(:product_name != '', product.name like %:product_name%, 1 = 1) order by system_order.date desc",
             countQuery = "select count(*) from system_order")
     Page<Order> findDynamicPageable(@Param("supplier_query_name")String supplierQueryName, @Param("client_query_name")String clientQueryName,
                                            @Param("supplier_match_name")String supplierMatchName, @Param("client_match_name")String clientMatchName,
                                            @Param("start_date") Date startDate, @Param("end_date")Date endDate,
                                            @Param("product_name")String productName, Pageable pageable);
 
-    @Query(nativeQuery = true, value = "select * from system_order where supplier_name = :username or client_name = :username")
+
+    @Query(nativeQuery = true, value = "select * from system_order where supplier_name = :username or client_name = :username order by date desc")
     Page<Order> findByUsername(@Param("username") String username, Pageable pageable);
+
+    @Query(nativeQuery = true, value = "select count(*) from system_order where status = 'invalid' and" +
+            " (supplier_name = :account_name or client_name = :account_name)")
+    Integer findCountOfInvalidOrder(@Param("account_name") String accountName);
+
+    @Query(nativeQuery = true, value = "select count(*) from system_order where status = 'confirming' and" +
+            " supplier_name = :account_name")
+    Integer findCountOfConfirmingOrder(@Param("account_name") String accountName);
+
+    @Query(nativeQuery = true, value = "select count(*) from system_order where (status = 'confirming' or status = 'checking') and" +
+            " client_name = :account_name")
+    Integer findCountOfCheckingOrder(@Param("account_name") String accountName);
 }

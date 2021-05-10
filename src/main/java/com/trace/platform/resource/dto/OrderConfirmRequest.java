@@ -1,9 +1,7 @@
 package com.trace.platform.resource.dto;
 
-import com.trace.platform.entity.Product;
 
 import java.util.List;
-import java.util.Map;
 
 public class OrderConfirmRequest {
 

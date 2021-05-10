@@ -112,21 +112,21 @@ public class OrderServiceImpl implements IOrderService {
                         Set<String> keySet = map.keySet();
                         for (String key : keySet) {
                             JSONObject proTradeObject = new JSONObject();
-                            proTradeObject.put("proId", batches.getProduct().getId());
+                            proTradeObject.put("proId", String.valueOf(batches.getProduct().getId()));
                             proTradeObject.put("proName", batches.getProduct().getName());
                             proTradeObject.put("proUnit", batches.getProduct().getUnit());
                             proTradeObject.put("bathId", key);
-                            proTradeObject.put("quantity", map.get(key));
+                            proTradeObject.put("quantity", String.valueOf(map.get(key)));
                             proTradeObject.put("date", DateUtil.toNormalizeString(request.getOrder().getDate()));
                             proTradeObject.put("sign", batches.getProductSign());
                             String proTradeJson = JSONObject.toJSONString(proTradeObject);
 
 
                             JSONObject fundsTradeObject = new JSONObject();
-                            fundsTradeObject.put("proId", batches.getProduct().getId());
+                            fundsTradeObject.put("proId", String.valueOf(batches.getProduct().getId()));
                             fundsTradeObject.put("proName", batches.getProduct().getName());
-                            fundsTradeObject.put("unitPrice", batches.getPrice());
-                            fundsTradeObject.put("totalPrice", batches.getPrice() * map.get(key));
+                            fundsTradeObject.put("unitPrice", String.valueOf(batches.getPrice()));
+                            fundsTradeObject.put("totalPrice", String.valueOf(batches.getPrice() * map.get(key)));
                             fundsTradeObject.put("date", DateUtil.toNormalizeString(request.getOrder().getDate()));
                             fundsTradeObject.put("sign", batches.getFundSign());
                             String fundsTradeJson = JSONObject.toJSONString(fundsTradeObject);
@@ -136,36 +136,9 @@ public class OrderServiceImpl implements IOrderService {
                                     proTradeJson, fundsTradeJson, batchId);
                         }
                     }
-
-
-
                 }
             };
             runnable.run();
-
-
-//            for (SelectedBatches batches : selectedBatchesList) {
-//                Map<String, Double> map = batches.getBatches();
-//                Set<String> keySet = map.keySet();
-//                for (String key : keySet) {
-//                    OrderDetails orderDetails = new OrderDetails();
-//                    orderDetails.setBatchId(key);
-//                    orderDetails.setDate(request.getOrder().getDate());
-//                    orderDetails.setOrderId(String.valueOf(request.getOrder().getId()));
-//                    orderDetails.setPrice(batches.getPrice());
-//                    orderDetails.setProduct(batches.getProduct());
-//                    orderDetails.setRcvId(request.getRcvId());
-//                    orderDetails.setProSign(batches.getProductSign());
-//                    orderDetails.setFundSign(batches.getFundSign());
-//                    orderDetails.setQuantity(map.get(key));
-//
-//                    TransactionSender sender = new TransactionSender(client, orderDetails);
-//                    Future<FabricOrderCreateResponse> future = executor.submit(sender);
-//                    resultList.add(future);
-//                }
-//            }
-//            ResultExecutor resultExecutor = new ResultExecutor(resultList, request.getOrder(), selectedBatchesList, request.getRcvId());
-//            executor.submit(resultExecutor);
         } catch (Exception e) {
             e.printStackTrace();
         }
