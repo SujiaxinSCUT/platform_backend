@@ -21,6 +21,7 @@ public class Stock implements Serializable {
     private String batchId;
     private Date date;
     private double quantity;
+    private double restQuantity;
     private double price;
     private String status;
 
@@ -68,6 +69,15 @@ public class Stock implements Serializable {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    @Column(nullable=false, name = "rest_quantity")
+    public double getRestQuantity() {
+        return restQuantity;
+    }
+
+    public void setRestQuantity(double restQuantity) {
+        this.restQuantity = restQuantity;
     }
 
     @Column(nullable=false, name = "quantity")

@@ -40,6 +40,9 @@ public class ProductResource {
     @Value("${platform.product.img-dir}")
     private String ImgDirUrl;
 
+    /*
+    *  在系统中提交新的商品并加入库存
+    * */
     @PostMapping
     public ResponseEntity createProduct(ProductCreateRequest productCreateRequest) {
         Account account = accountRepository.findByName(productCreateRequest.getSubmitterId());
@@ -82,6 +85,7 @@ public class ProductResource {
         stock.setDate(new Date());
         stock.setPrice(productCreateRequest.getPrice());
         stock.setQuantity(productCreateRequest.getQuantity());
+        stock.setRestQuantity(productCreateRequest.getQuantity());
         stock.setStatus(Stock.ON_SAVING);
 
         Stock savedStock = stockRepository.save(stock);
@@ -108,6 +112,12 @@ public class ProductResource {
     public ResponseEntity<List<Product>> getProductAll() {
         List<Product> productList = productRepository.findAll();
         return new ResponseEntity<List<Product>>(productList, HttpStatus.OK);
+    }
+
+    @GetMapping("/id/{id}")
+    public Product getProductById(@PathVariable("id")int id) {
+        Product product = productRepository.findById(id).get();
+        return product;
     }
 
 }

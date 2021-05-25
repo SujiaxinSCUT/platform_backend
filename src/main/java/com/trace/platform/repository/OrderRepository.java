@@ -44,6 +44,10 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
                                            @Param("start_date") Date startDate, @Param("end_date")Date endDate,
                                            @Param("product_name")String productName, Pageable pageable);
 
+    @Query(nativeQuery = true, value = "select avg(price) from system_order, ordered_product " +
+            "where system_order.id = ordered_product.order_id and (system_order.status = 'success' or " +
+            "system_order.status = 'checking') and ordered_product.product_id = :product_id")
+    Double findAvgPriceByProId(@Param("product_id")int productId);
 
     @Query(nativeQuery = true, value = "select * from system_order where supplier_name = :username or client_name = :username order by date desc")
     Page<Order> findByUsername(@Param("username") String username, Pageable pageable);
@@ -59,4 +63,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query(nativeQuery = true, value = "select count(*) from system_order where (status = 'confirming' or status = 'checking') and" +
             " client_name = :account_name")
     Integer findCountOfCheckingOrder(@Param("account_name") String accountName);
+
+    @Query(nativeQuery = true, value = "select count(*) from " +
+            "system_order, ordered_product " +
+            "where system_order.id = ordered_product.order_id and client_name = :account_name")
+    Integer findCountOfTxBatches(@Param("account_name") String accountName);
 }

@@ -32,4 +32,10 @@ public interface ProductMaterialRelRepository extends JpaRepository<ProductMater
             "and account_name = :account_name")
     List<ProductMaterialRel> findByProductIdAll(@Param("product_name") String productName,
                                                 @Param("account_name")String accountName);
+
+    @Query(nativeQuery = true, value = "select count(*) from " +
+            "(select id from product_material where " +
+            "account_name = :account_name group by product_name, product_batch_id) " +
+            "as products")
+    Integer findCountOfProductMaterialBatches(@Param("account_name") String accountName);
 }

@@ -1,9 +1,6 @@
 package com.trace.platform.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.starkbank.ellipticcurve.Ecdsa;
-import com.starkbank.ellipticcurve.PrivateKey;
-import com.starkbank.ellipticcurve.Signature;
 import com.trace.platform.entity.Order;
 import com.trace.platform.entity.Product;
 import com.trace.platform.entity.Stock;
@@ -15,9 +12,7 @@ import com.trace.platform.resource.dto.OrderedProductResponse;
 import com.trace.platform.resource.dto.SelectedBatches;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IOrderService;
-import com.trace.platform.service.dto.FabricOrderCreateResponse;
-import com.trace.platform.service.dto.OrderCreateRequest;
-import com.trace.platform.service.dto.OrderCreateResponse;
+import com.trace.platform.service.dto.*;
 import com.trace.platform.utils.DateUtil;
 import org.hyperledger.fabric.sdk.FabricClient;
 import org.hyperledger.fabric.sdk.util.Responses;
@@ -27,11 +22,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -95,21 +87,24 @@ public class OrderServiceImpl implements IOrderService {
         FabricClient client = new FabricClient(request.getSenderId(),
                 request.getClientKey(), request.getClientCrt(), request.getServerCrt());
         List<Future<FabricOrderCreateResponse>> resultList = new ArrayList<>();
+        Order order = request.getOrder();
+        order.setStatus(Order.Status.CHECKING);
+        orderRepository.save(order);
         try {
             client.init();
+        } catch (Exception e) {
+            e.printStackTrace();
+            order.setStatus(Order.Status.INVALID);
+            orderRepository.save(order);
+            return;
+        }
             List<SelectedBatches> selectedBatchesList = request.getSelectedBatchesList();
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    String keyFileStr = null;
-                    try {
-                        keyFileStr = new String(Files.readAllBytes(Paths.get("D://Desktop//keys//Mm1//privateKey.pem")));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                     for (SelectedBatches batches : selectedBatchesList) {
                         Map<String, Double> map = batches.getBatches();
                         Set<String> keySet = map.keySet();
+                        Stock newStock = new Stock();
+                        Double totalQuantity = 0.0;
+                        String batchId = UUID.randomUUID().toString().replace("-", "").toLowerCase();
                         for (String key : keySet) {
                             JSONObject proTradeObject = new JSONObject();
                             proTradeObject.put("proId", String.valueOf(batches.getProduct().getId()));
@@ -131,18 +126,159 @@ public class OrderServiceImpl implements IOrderService {
                             fundsTradeObject.put("sign", batches.getFundSign());
                             String fundsTradeJson = JSONObject.toJSONString(fundsTradeObject);
 
-                            String batchId = UUID.randomUUID().toString().replace("-", "").toLowerCase();
-                            Responses responses = client.sendTrade(request.getRcvId(), String.valueOf(request.getOrder().getId()),
+
+                            Responses responses = client.sendTrade(request.getRcvId(), key,
                                     proTradeJson, fundsTradeJson, batchId);
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                order.setStatus(Order.Status.INVALID);
+                                orderRepository.save(order);
+                                return;
+                            }
+                            if (responses.getCode() == 1) {
+                                responses = client.sendTrade(request.getRcvId(), key,
+                                        proTradeJson, fundsTradeJson, batchId);
+                                if (responses.getCode() == 0) {
+                                    totalQuantity += map.get(key);
+                                    Stock stock = stockRepository.findByBatchId(key);
+                                    stock.setRestQuantity(stock.getRestQuantity() - map.get(key));
+                                    stock.setStatus(Stock.FREE);
+                                    stockRepository.save(stock);
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                totalQuantity += map.get(key);
+                                Stock stock = stockRepository.findByBatchId(key);
+                                stock.setRestQuantity(stock.getRestQuantity() - map.get(key));
+                                stock.setStatus(Stock.FREE);
+                                stockRepository.save(stock);
+                            }
                         }
+                        newStock.setQuantity(totalQuantity);
+                        newStock.setRestQuantity(totalQuantity);
+                        newStock.setDate(new Date());
+                        newStock.setStatus(Stock.FREE);
+                        newStock.setBatchId(batchId);
+                        newStock.setProductId(batches.getProduct().getId());
+                        newStock.setAccountId(request.getRcvId());
+                        newStock.setPrice(batches.getPrice());
+                        stockRepository.save(newStock);
                     }
-                }
-            };
-            runnable.run();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                    order.setStatus(Order.Status.SUCCESS);
+                    orderRepository.save(order);
+
+
     }
+
+    @Override
+    public TraceResult traceProduct(String ownerId, String proId, String batchId, String adminName, String clientKey, String clientCrt, String serverCrt) throws Exception {
+        FabricClient client = new FabricClient(adminName, clientKey, clientCrt, serverCrt);
+        client.init();
+        Responses responses = client.traceProducts(ownerId, proId, batchId);
+
+        String message = responses.getMessages();
+        JSONObject jsonObject = JSONObject.parseObject(message);
+        List<JSONObject> jsonNodes = (List<JSONObject>) jsonObject.get("node");
+        List<JSONObject> jsonEdges = (List<JSONObject>) jsonObject.get("edges");
+
+        List<Node> nodes = new ArrayList<>();
+        List<Edge> edges = new ArrayList<>();
+
+//        SimpleDateFormat sdfSource = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+
+        for (JSONObject object : jsonNodes) {
+            String type = object.getString("type");
+            if (type.equalsIgnoreCase("products")) {
+                ProductNode node = new ProductNode();
+                node.setId(object.getInteger("id"));
+                node.setOwner(object.getString("owner"));
+                node.setOrder(false);
+                JSONObject value = object.getJSONObject("value");
+                node.setBatchId(value.getString("bathId"));
+                node.setDate(DateUtil.strToDate(value.getString("date")));
+                nodes.add(node);
+            } else {
+                OrderNode node = new OrderNode();
+                node.setId(object.getInteger("id"));
+                node.setOrder(true);
+                JSONObject value = object.getJSONObject("value");
+                node.setDate(DateUtil.strToDate(value.getString("date")));
+                node.setBatchId(value.getString("bathId"));
+                node.setClientName(value.getString("reci"));
+                node.setSupplierName(value.getString("send"));
+                node.setQuantity(value.getDouble("quantity"));
+                nodes.add(node);
+            }
+        }
+        for (JSONObject object : jsonEdges) {
+            Edge edge = new Edge();
+            edge.setFrom(object.getInteger("from"));
+            edge.setTo(object.getInteger("to"));
+            edges.add(edge);
+        }
+
+        TraceResult traceResult = new TraceResult();
+        traceResult.setEdges(edges);
+        traceResult.setNodes(nodes);
+        return traceResult;
+    }
+
+    @Override
+    public TraceResult traceProductBack(String ownerId, String proId, String batchId, String adminName, String clientKey, String clientCrt, String serverCrt) throws Exception {
+        FabricClient client = new FabricClient(adminName, clientKey, clientCrt, serverCrt);
+        client.init();
+        Responses responses = client.traceProductsBack(ownerId, proId, batchId);
+
+        String message = responses.getMessages();
+        JSONObject jsonObject = JSONObject.parseObject(message);
+        List<JSONObject> jsonNodes = (List<JSONObject>) jsonObject.get("node");
+        List<JSONObject> jsonEdges = (List<JSONObject>) jsonObject.get("edges");
+
+        List<Node> nodes = new ArrayList<>();
+        List<Edge> edges = new ArrayList<>();
+
+//        SimpleDateFormat sdfSource = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+
+        for (JSONObject object : jsonNodes) {
+            String type = object.getString("type");
+            if (type.equalsIgnoreCase("products")) {
+                ProductNode node = new ProductNode();
+                node.setId(object.getInteger("id"));
+                node.setOwner(object.getString("owner"));
+                node.setOrder(false);
+                JSONObject value = object.getJSONObject("value");
+                node.setBatchId(value.getString("batchId"));
+                node.setDate(DateUtil.strToDate(value.getString("date")));
+                nodes.add(node);
+            } else {
+                OrderNode node = new OrderNode();
+                node.setId(object.getInteger("id"));
+                node.setOrder(true);
+                JSONObject value = object.getJSONObject("value");
+                node.setDate(DateUtil.strToDate(value.getString("date")));
+                node.setBatchId(value.getString("batchId"));
+                node.setClientName(value.getString("reci"));
+                node.setSupplierName(value.getString("send"));
+                node.setQuantity(value.getDouble("quantity"));
+                nodes.add(node);
+            }
+        }
+        for (JSONObject object : jsonEdges) {
+            Edge edge = new Edge();
+            edge.setFrom(object.getInteger("from"));
+            edge.setTo(object.getInteger("to"));
+            edges.add(edge);
+        }
+
+        TraceResult traceResult = new TraceResult();
+        traceResult.setEdges(edges);
+        traceResult.setNodes(nodes);
+        return traceResult;
+    }
+
 
     @Transactional
     public void stockAndOrderChange(Order order, String rcvId,
@@ -154,12 +290,13 @@ public class OrderServiceImpl implements IOrderService {
             Double totalQuantity = 0.0;
             for (String key : keySet) {
                 Stock stock = stockRepository.findByBatchId(key);
-                stock.setQuantity(stock.getQuantity() - batchesMap.get(key));
+                stock.setRestQuantity(stock.getQuantity() - batchesMap.get(key));
                 stock.setStatus(Stock.FREE);
                 stockRepository.save(stock);
                 totalQuantity += batchesMap.get(key);
             }
             newStock.setQuantity(totalQuantity);
+            newStock.setRestQuantity(totalQuantity);
             newStock.setDate(new Date());
             newStock.setStatus(Stock.FREE);
             newStock.setBatchId(newBatches.get(String.valueOf(batches.getProduct().getId())));
@@ -222,192 +359,5 @@ public class OrderServiceImpl implements IOrderService {
             }
 
         }
-    }
-}
-
-class TransactionSender implements Callable<FabricOrderCreateResponse> {
-
-    FabricClient client;
-    OrderDetails orderDetails;
-
-
-    public TransactionSender(FabricClient client, OrderDetails orderDetails) {
-        this.client = client;
-        this.orderDetails = orderDetails;
-    }
-
-    @Override
-    public FabricOrderCreateResponse call() throws Exception {
-
-//        JSONObject proTradeObject = new JSONObject();
-////        proTradeObject.put("proId", String.valueOf(this.orderDetails.getProduct().getId()));
-//        proTradeObject.put("proId", "1");
-////        proTradeObject.put("proName", this.orderDetails.getProduct().getName());
-//        proTradeObject.put("proName", "c");
-//        proTradeObject.put("proUnit", this.orderDetails.getProduct().getUnit());
-//        proTradeObject.put("bathId", this.orderDetails.getBatchId());
-////        proTradeObject.put("quantity", String.valueOf(this.orderDetails.getQuantity()));
-//        proTradeObject.put("quantity", "100");
-////        proTradeObject.put("date", DateUtil.toNormalizeString(this.orderDetails.getDate()));
-//        proTradeObject.put("date", "2021-03-10 20:18");
-//        proTradeObject.put("sign", this.orderDetails.getProSign());
-//        String proTradeJson = JSONObject.toJSONString(proTradeObject);
-//
-//
-//        JSONObject fundsTradeObject = new JSONObject();
-////        fundsTradeObject.put("proId", String.valueOf(this.orderDetails.getProduct().getId()));
-//        fundsTradeObject.put("proId", "1");
-////        fundsTradeObject.put("proName", this.orderDetails.getProduct().getName());
-//        fundsTradeObject.put("proName", "c");
-////        fundsTradeObject.put("unitPrice", String.valueOf(this.orderDetails.getPrice()));
-//        fundsTradeObject.put("unitPrice", "1000");
-////        fundsTradeObject.put("totalPrice", String.valueOf(this.orderDetails.getPrice() * this.orderDetails.getQuantity()));
-//        fundsTradeObject.put("totalPrice", "100000");
-////        fundsTradeObject.put("date", DateUtil.toNormalizeString(this.orderDetails.getDate()));
-//        fundsTradeObject.put("date", "2021-03-10 20:18");
-//        fundsTradeObject.put("sign", this.orderDetails.getFundSign());
-//        String fundsTradeJson = JSONObject.toJSONString(fundsTradeObject);
-
-        String keyFileStr = new String(Files.readAllBytes(Paths.get("D://Desktop//keys//Mm1//privateKey.pem")));
-        PrivateKey key = PrivateKey.fromPem(keyFileStr);
-        JSONObject proTrade= new JSONObject();
-        proTrade.put("send", "Mp1");
-        proTrade.put("reci", "Mm1");
-        proTrade.put("proId", "1");
-        proTrade.put("proName", "c");
-        proTrade.put("quantity", "100");
-        proTrade.put("proUnit", "kg");
-        proTrade.put("date", "2021-03-02 22:18".substring(0, 10));
-        Signature signaturePro1 = Ecdsa.sign(JSONObject.toJSONString(proTrade), key);
-        String proSign = new String(signaturePro1.toBase64().getBytes());
-
-        JSONObject proTradeObject = new JSONObject();
-        proTradeObject.put("proId", "1");
-        proTradeObject.put("proName", "c");
-        proTradeObject.put("proUnit", "kg");
-        proTradeObject.put("bathId", "202104272230000000");
-        proTradeObject.put("quantity", "100");
-        proTradeObject.put("date", "2021-03-02 22:18");
-        proTradeObject.put("sign", proSign);
-        String proTradeJson = JSONObject.toJSONString(proTradeObject);
-
-        JSONObject fundsTrade= new JSONObject();
-        fundsTrade.put("send", "Mp1");
-        fundsTrade.put("reci", "Mm1");
-        fundsTrade.put("proId", "1");
-        fundsTrade.put("proName", "c");
-        fundsTrade.put("unitPrice", "1000");
-        fundsTrade.put("totalPrice", "100000");
-        fundsTrade.put("date", "2021-03-02 22:18".substring(0, 10));
-
-        Signature signaturePro2 = Ecdsa.sign(JSONObject.toJSONString(fundsTrade), key);
-        String fundsSign =new String(signaturePro2.toBase64().getBytes());
-
-        JSONObject fundsTradeObject = new JSONObject();
-//			fundsTradeObject.put("send", "Mp1");
-//			fundsTradeObject.put("reci", "Mm1");
-        fundsTradeObject.put("proId", "1");
-        fundsTradeObject.put("proName", "c");
-        fundsTradeObject.put("unitPrice", "1000");
-        fundsTradeObject.put("totalPrice", "100000");
-        fundsTradeObject.put("date", "2021-03-02 22:18");
-        fundsTradeObject.put("sign", fundsSign);
-        String fundsTradeJson = JSONObject.toJSONString(fundsTradeObject);
-
-        String batchId = UUID.randomUUID().toString().replace("-","").toLowerCase();
-        Responses responses = client.sendTrade(this.orderDetails.getRcvId(), "000012",
-                proTradeJson, fundsTradeJson, "2021043019000000");
-        FabricOrderCreateResponse response = new FabricOrderCreateResponse();
-        response.setBatchId(batchId);
-        response.setSuccess(responses.getCode() == 0);
-        return response;
-    }
-
-
-}
-
-class OrderDetails {
-    String proSign;
-    String fundSign;
-    Product product;
-    String batchId;
-    Double quantity;
-    Date date;
-    Double price;
-    String rcvId;
-    String orderId;
-
-    public OrderDetails() {}
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-
-    public String getProSign() {
-        return proSign;
-    }
-
-    public void setProSign(String proSign) {
-        this.proSign = proSign;
-    }
-
-    public String getFundSign() {
-        return fundSign;
-    }
-
-    public void setFundSign(String fundSign) {
-        this.fundSign = fundSign;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
-
-    public String getBatchId() {
-        return batchId;
-    }
-
-    public void setBatchId(String batchId) {
-        this.batchId = batchId;
-    }
-
-    public Double getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Double quantity) {
-        this.quantity = quantity;
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
-    }
-
-    public String getRcvId() {
-        return rcvId;
-    }
-
-    public void setRcvId(String rcvId) {
-        this.rcvId = rcvId;
     }
 }

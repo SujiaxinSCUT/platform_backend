@@ -41,4 +41,6 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
     @Query(nativeQuery = true, value = "select * from stock where account_id = :account_id and product_id = :product_id")
     Page<Stock> findByAccountIdAndProductIdPageable(@Param("account_id") String accountId, @Param("product_id") int productId, Pageable pageable);
 
+    @Query(nativeQuery = true, value = "select * from stock where account_id = :account_id order by date desc")
+    Page<Stock> findByAccountIdPageable(@Param("account_id") String accountId, Pageable pageable);
 }

@@ -48,6 +48,9 @@ public class OrderBusinessResource {
     @Autowired
     private StockRepository stockRepository;
 
+    /*
+    *  创建待处理订单
+    * */
     @PostMapping
     public ResponseEntity createOrder(@RequestBody OrderCreateRequest orderCreateRequest) {
         if (accountRepository.findByName(orderCreateRequest.getSupplierName()) == null) {
@@ -186,7 +189,7 @@ public class OrderBusinessResource {
     }
 
     @PostMapping("/confirm")
-    public ResponseEntity confirmOrder(OrderConfirmRequest request) {
+    public ResponseEntity confirmOrder(@RequestBody OrderConfirmRequest request) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
         Account account = accountRepository.findByName(currentUsername);
         Order order = orderRepository.findById(request.getOrderId()).get();

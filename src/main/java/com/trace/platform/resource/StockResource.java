@@ -3,14 +3,8 @@ package com.trace.platform.resource;
 import com.trace.platform.entity.Account;
 import com.trace.platform.entity.ProductMaterialRel;
 import com.trace.platform.entity.Stock;
-import com.trace.platform.repository.AccountRepository;
-import com.trace.platform.repository.ProductMaterialRelRepository;
-import com.trace.platform.repository.ProductRepository;
-import com.trace.platform.repository.StockRepository;
-import com.trace.platform.resource.dto.FormedBatch;
-import com.trace.platform.resource.dto.ProductDetailsResponse;
-import com.trace.platform.resource.dto.StockCreateRequest;
-import com.trace.platform.resource.dto.StockSaveRequest;
+import com.trace.platform.repository.*;
+import com.trace.platform.resource.dto.*;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IStockService;
 import com.trace.platform.service.dto.StockCreateResponse;
@@ -42,11 +36,17 @@ public class StockResource {
     private ProductRepository productRepository;
 
     @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
     private ProductMaterialRelRepository productMaterialRelRepository;
 
     @Autowired
     private IStockService iStockService;
 
+    /*
+    *   添加已有商品进入库存
+    * */
     @PostMapping
     public ResponseEntity createStock(StockCreateRequest stockCreateRequest) {
         Account account = accountRepository.findByName(stockCreateRequest.getAccountName());
@@ -66,12 +66,16 @@ public class StockResource {
         stock.setDate(date);
         stock.setPrice(stockCreateRequest.getPrice());
         stock.setQuantity(stockCreateRequest.getQuantity());
+        stock.setRestQuantity(stockCreateRequest.getQuantity());
         stock.setStatus(Stock.ON_SAVING);
 
         Stock savedStock = stockRepository.save(stock);
         return new ResponseEntity(savedStock, HttpStatus.OK);
     }
 
+    /*
+    *  保存商品批次到区块链中
+    * */
     @PostMapping("/save")
     @Transactional
     public ResponseEntity saveStock(@RequestBody StockSaveRequest stockSaveRequest) {
@@ -209,5 +213,30 @@ public class StockResource {
         response.setContents(pages.getContent());
 
         return response;
+    }
+
+    @GetMapping("/personal_stock")
+    public PersonalStockResponse getPersonalStock() {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+        Pageable pageable = PageRequest.of(0, 5);
+//        获取库存商品列表
+        PageableResponse<ProductDetailsResponse> response = iStockService.getProductInStockPageable(currentUsername, pageable);
+
+//        获取最近5次入库记录
+        Page<Stock> page = stockRepository.findByAccountIdPageable(currentUsername, PageRequest.of(0, 5));
+
+//        获取生产批次数量
+        int produceBatches = productMaterialRelRepository.findCountOfProductMaterialBatches(currentUsername);
+//        获取交易批次数量
+        int txBatches = orderRepository.findCountOfTxBatches(currentUsername);
+
+        PersonalStockResponse personalStockResponse = new PersonalStockResponse();
+        personalStockResponse.setProduceBatch(produceBatches);
+        personalStockResponse.setTotalBatchNum((int) page.getTotalElements());
+        personalStockResponse.setTransactionBatch(txBatches);
+        personalStockResponse.setProductsResponse(response);
+        personalStockResponse.setRecentStock(page.getContent());
+
+        return personalStockResponse;
     }
 }

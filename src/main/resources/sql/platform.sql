@@ -36,7 +36,7 @@ INSERT INTO `account` values(7, "Mm1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50J
 INSERT INTO `account` values(8, "Mr1", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "D://Desktop//keyAndCertFile//Mr1//server.crt",  "D://Desktop//keys//Mr1//publicKey.pem", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(3, "Mr2", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
 --INSERT INTO `account` values(3, "Mr3", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "2fsli3jf", false, "ROLE_USER", "2017-3-16");
-
+INSERT INTO `account` values(9, "Spf", "$2a$10$FJKY91H0r0tw1yps0r7QoO/UXPdxuG50JN3RLudhkklwszzLmPwH6", "D://Desktop//keyAndCertFile//Spf//server.crt",  "D://Desktop//keys//Spf//publicKey.pem", false, "ROLE_ADMIN_FUND ROLE_ADMIN_QUALITY", "2017-3-16");
 -- ----------------------------
 -- Table structure for product
 -- ----------------------------
@@ -64,14 +64,13 @@ CREATE TABLE `stock` (
   `product_id` int(11) NOT NULL,
   `batch_id` varchar(255) NOT NULL,
   `quantity` double(18,2) NOT NULL,
+  `rest_quantity` double(18,2) NOT NULL,
   `price` double(18,2) NOT NULL,
   `status` varchar(255) NOT NULL,
   `date` timestamp NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `stock` values (1, "Mp1", 001,  "20210421000", 1000, 12, "free", "2021-04-21");
-INSERT INTO `stock` values (2, "Mm1", 002,  "20210421001", 1000, 65, "free", "2021-04-21");
 
 -- ----------------------------
 -- Table structure for system_order
