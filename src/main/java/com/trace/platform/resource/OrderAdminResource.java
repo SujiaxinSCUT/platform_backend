@@ -1,13 +1,11 @@
 package com.trace.platform.resource;
 
-import com.trace.platform.entity.Account;
-import com.trace.platform.entity.Order;
-import com.trace.platform.entity.Product;
-import com.trace.platform.entity.Stock;
+import com.trace.platform.entity.*;
 import com.trace.platform.repository.AccountRepository;
 import com.trace.platform.repository.OrderRepository;
 import com.trace.platform.repository.ProductRepository;
 import com.trace.platform.repository.StockRepository;
+import com.trace.platform.resource.dto.AvgPriceResponse;
 import com.trace.platform.resource.dto.TraceRequest;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.IOrderService;
@@ -24,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.ParseException;
 
 
 @RestController
@@ -88,9 +87,26 @@ public class OrderAdminResource {
         return new ResponseEntity(result, HttpStatus.OK);
     }
 
-    @GetMapping("/avg/product_id/{product_id}")
-    public Double getAvgPrice(@PathVariable("product_id") int productId) {
-        Double avgPrice = orderRepository.findAvgPriceByProId(productId);
-        return avgPrice;
+    @GetMapping("/avg/product_id/{product_id}/pageable/{page}/{size}")
+    public ResponseEntity getAvgPrice(@PathVariable("product_id") int productId,
+                                        @PathVariable("page")int page, @PathVariable("size")int size) {
+        Double avgPrice = 0.0;
+        PageableResponse<OrderWithProduct> orderPage = null;
+        try {
+            orderPage = iOrderService.getOrderByProductId(productId, PageRequest.of(page, size));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return new ResponseEntity("查询失败", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        AvgPriceResponse response = new AvgPriceResponse();
+        PageableResponse<OrderWithProduct> pageableResponse = new PageableResponse<>();
+
+        if (orderPage.getTotalElements() > 0) {
+            avgPrice = orderRepository.findAvgPriceByProId(productId);
+        }
+        response.setAvgPrice(avgPrice);
+        response.setPageableResponse(pageableResponse);
+
+        return new ResponseEntity(response, HttpStatus.OK);
     }
 }

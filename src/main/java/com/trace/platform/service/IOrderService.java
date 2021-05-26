@@ -1,13 +1,16 @@
 package com.trace.platform.service;
 
 import com.trace.platform.entity.Order;
+import com.trace.platform.entity.OrderWithProduct;
 import com.trace.platform.repository.dto.OrderQueryBody;
 import com.trace.platform.resource.dto.OrderedProductResponse;
 import com.trace.platform.resource.pojo.PageableResponse;
 import com.trace.platform.service.dto.OrderCreateRequest;
 import com.trace.platform.service.dto.TraceResult;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.text.ParseException;
 import java.util.List;
 
 public interface IOrderService {
@@ -21,4 +24,6 @@ public interface IOrderService {
     TraceResult traceProduct(String ownerId, String proId, String batchId, String adminName, String clientKey, String clientCrt, String serverCrt) throws Exception;
 
     TraceResult traceProductBack(String ownerId, String proId, String batchId, String adminName, String clientKey, String clientCrt, String serverCrt) throws Exception;
+
+    PageableResponse<OrderWithProduct> getOrderByProductId(int productId, Pageable pageable) throws ParseException;
 }

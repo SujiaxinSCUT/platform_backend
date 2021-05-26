@@ -2,6 +2,7 @@ package com.trace.platform.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.trace.platform.entity.Order;
+import com.trace.platform.entity.OrderWithProduct;
 import com.trace.platform.entity.Product;
 import com.trace.platform.entity.Stock;
 import com.trace.platform.repository.OrderRepository;
@@ -22,7 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -277,6 +278,34 @@ public class OrderServiceImpl implements IOrderService {
         traceResult.setEdges(edges);
         traceResult.setNodes(nodes);
         return traceResult;
+    }
+
+    @Override
+    public PageableResponse<OrderWithProduct> getOrderByProductId(int productId, Pageable pageable) throws ParseException {
+        Page<Map<String, Object>> page = orderRepository.findByProductIdPageable(productId, pageable);
+        List<Map<String, Object>> content = page.getContent();
+        List<OrderWithProduct> newContent = new ArrayList<>();
+
+        for (Map<String, Object> map : content) {
+            if (map.get("client_name") == null) continue;
+            OrderWithProduct orderWithProduct = new OrderWithProduct();
+            orderWithProduct.setClientName((String) map.get("client_name"));
+            orderWithProduct.setSupplierName((String) map.get("supplier_name"));
+            orderWithProduct.setDate(DateUtil.strToDate((String) map.get("date")));
+            orderWithProduct.setOrderId((Integer) map.get("order_id"));
+            orderWithProduct.setPrice((Double) map.get("price"));
+            orderWithProduct.setQuantity((Double) map.get("quantity"));
+
+            newContent.add(orderWithProduct);
+        }
+
+        PageableResponse<OrderWithProduct> response = new PageableResponse<>();
+        response.setPage(page.getNumber());
+        response.setSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+        response.setContents(newContent);
+        return response;
     }
 
 

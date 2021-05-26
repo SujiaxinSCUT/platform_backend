@@ -1,6 +1,7 @@
 package com.trace.platform.repository;
 
 import com.trace.platform.entity.Order;
+import com.trace.platform.entity.OrderWithProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.Map;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
@@ -68,4 +70,10 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             "system_order, ordered_product " +
             "where system_order.id = ordered_product.order_id and client_name = :account_name")
     Integer findCountOfTxBatches(@Param("account_name") String accountName);
+
+    @Query(nativeQuery = true, value = "select order_id, client_name, supplier_name, date, quantity, price from system_order, ordered_product " +
+            "where system_order.id = ordered_product.order_id and (system_order.status = 'success' or " +
+            "system_order.status = 'checking') and ordered_product.product_id = :product_id",
+            countQuery = "select count(*) from system_order")
+    Page<Map<String, Object>> findByProductIdPageable(@Param("product_id")int productId, Pageable pageable);
 }
