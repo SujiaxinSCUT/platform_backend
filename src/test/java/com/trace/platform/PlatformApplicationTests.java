@@ -75,24 +75,24 @@ class PlatformApplicationTests {
 		pemFile = new String(Files.readAllBytes(Paths.get(pemFilePath)));
 		client = new FabricClient(client_id, keyFile, crtFile, pemFile);
 		client.init();
-		if (client != null) {
-			String proName = "a";
-			String unit = "kg";
-			String batchId = "202104282230000002";
-			List<String> list = new ArrayList<>();
-			String form = JSON.toJSONString(list);
-			System.out.println("form: " + form);
-			String date = DateUtil.toNormalizeString(new Date());
-			Responses responses = client.addProducts("1", proName, unit, batchId, form, date);
-			System.out.println("The message of response is " + responses.getMessages());
-		}
-		Thread.sleep(2000);
+//		if (client != null) {
+//			String proName = "a";
+//			String unit = "kg";
+//			String batchId = "202104282230000002";
+//			List<String> list = new ArrayList<>();
+//			String form = JSON.toJSONString(list);
+//			System.out.println("form: " + form);
+//			String date = DateUtil.toNormalizeString(new Date());
+//			Responses responses = client.addProducts("1", proName, unit, batchId, form, date);
+//			System.out.println("The message of response is " + responses.getMessages());
+//		}
+//		Thread.sleep(2000);
 		if (client != null) {
 			String proName = "b";
 			String unit = "kg";
-			String batchId = "202104282230000003";
+			String batchId = "2020202020202";
 			List<String> list = new ArrayList<>();
-			list.add("1202104282230000002");
+			list.add("1bd6993c1926f4cd1bd63bfaa2da9d73f");
 			String form = JSON.toJSONString(list);
 			System.out.println("form: " + form);
 			String date = DateUtil.toNormalizeString(new Date());
@@ -330,8 +330,10 @@ class PlatformApplicationTests {
 //		Responses responses = client.traceProducts("Mp1", "2", "202104282230000006");
 //		System.out.println(responses);
 		IOrderService iOrderService = new OrderServiceImpl();
-		TraceResult result = iOrderService.traceProduct("Mp1", "1", "202104282230000002", "Spf",
+		TraceResult result = iOrderService.traceProductBack("Mp1", "2", "eac7bbd56ee546acbb6eb9c4bb20b5be", "Spf",
 				keyFile, crtFile, pemFile);
-		System.out.println(result.getNodes().get(0).getBatchId());
+//		Thread.sleep(1000);
+//		iOrderService.traceProduct("Mp1", "2", "eac7bbd56ee546acbb6eb9c4bb20b5be", "Spf",
+//				keyFile, crtFile, pemFile);
 	}
 }

@@ -84,10 +84,10 @@ public class StockServiceImpl implements IStockService {
                 request.getClientKey(), request.getClientCrt(), request.getServerCrt());
         client.init();
         List<String> formList = new ArrayList<String>();
-        Map<String, List<String>> maps = request.getForm();
+        Map<Integer, List<String>> maps = request.getForm();
         if (maps != null) {
-            Set<String> keySet = maps.keySet();
-            for (String key : keySet) {
+            Set<Integer> keySet = maps.keySet();
+            for (int key : keySet) {
                 List<String> list = maps.get(key);
                 for (String batchId : list) {
                     formList.add(key + batchId);

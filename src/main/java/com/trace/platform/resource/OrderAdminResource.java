@@ -99,13 +99,12 @@ public class OrderAdminResource {
             return new ResponseEntity("查询失败", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         AvgPriceResponse response = new AvgPriceResponse();
-        PageableResponse<OrderWithProduct> pageableResponse = new PageableResponse<>();
 
         if (orderPage.getTotalElements() > 0) {
             avgPrice = orderRepository.findAvgPriceByProId(productId);
         }
         response.setAvgPrice(avgPrice);
-        response.setPageableResponse(pageableResponse);
+        response.setPageableResponse(orderPage);
 
         return new ResponseEntity(response, HttpStatus.OK);
     }

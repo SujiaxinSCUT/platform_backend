@@ -13,7 +13,7 @@ public class StockCreateRequest {
     private String unit;
     private String batchId;
     private Date date;
-    private Map<String, List<String>> form;
+    private Map<Integer, List<String>> form;
     private String clientKey;
     private String clientCrt;
     private String serverCrt;
@@ -74,11 +74,11 @@ public class StockCreateRequest {
         this.serverCrt = serverCrt;
     }
 
-    public Map<String, List<String>> getForm() {
+    public Map<Integer, List<String>> getForm() {
         return form;
     }
 
-    public void setForm(Map<String, List<String>> form) {
+    public void setForm(Map<Integer, List<String>> form) {
         this.form = form;
     }
 

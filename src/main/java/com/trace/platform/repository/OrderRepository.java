@@ -30,7 +30,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     Page<Order> findBySupplierIdAndStatus(@Param("supplier_name") String supplierName, @Param("status")String status, Pageable pageable);
 
 
-    @Query(nativeQuery = true, value = "select system_order.id, system_order.client_name, system_order.supplier_name, system_order.status, system_order.date " +
+    @Query(nativeQuery = true, value = "select distinct system_order.id, system_order.client_name, system_order.supplier_name, system_order.status, system_order.date " +
             "from system_order, ordered_product, product " +
             "where system_order.id = ordered_product.order_id and ordered_product.product_id = product.id " +
             "and if(:supplier_query_name != '', supplier_name = :supplier_query_name, 1 = 1) " +
@@ -71,7 +71,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             "where system_order.id = ordered_product.order_id and client_name = :account_name")
     Integer findCountOfTxBatches(@Param("account_name") String accountName);
 
-    @Query(nativeQuery = true, value = "select order_id, client_name, supplier_name, date, quantity, price from system_order, ordered_product " +
+    @Query(nativeQuery = true, value = "select ordered_product.order_id, system_order.client_name, system_order.supplier_name, system_order.date, ordered_product.quantity, ordered_product.price " +
+            "from system_order, ordered_product " +
             "where system_order.id = ordered_product.order_id and (system_order.status = 'success' or " +
             "system_order.status = 'checking') and ordered_product.product_id = :product_id",
             countQuery = "select count(*) from system_order")

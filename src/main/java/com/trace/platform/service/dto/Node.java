@@ -8,6 +8,9 @@ public class Node {
     private boolean isOrder;
     private Date date;
     private String batchId;
+    private int productId;
+    private String productUnit;
+    private String productName;
 
     public int getId() {
         return id;
@@ -15,6 +18,30 @@ public class Node {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
+
+    public String getProductUnit() {
+        return productUnit;
+    }
+
+    public void setProductUnit(String productUnit) {
+        this.productUnit = productUnit;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 
     public boolean isOrder() {

@@ -176,10 +176,12 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public TraceResult traceProduct(String ownerId, String proId, String batchId, String adminName, String clientKey, String clientCrt, String serverCrt) throws Exception {
+        Thread.sleep(1000);
         FabricClient client = new FabricClient(adminName, clientKey, clientCrt, serverCrt);
         client.init();
         Responses responses = client.traceProducts(ownerId, proId, batchId);
-
+        Thread.sleep(1000);
+        client = null;
         String message = responses.getMessages();
         JSONObject jsonObject = JSONObject.parseObject(message);
         List<JSONObject> jsonNodes = (List<JSONObject>) jsonObject.get("node");
@@ -200,6 +202,9 @@ public class OrderServiceImpl implements IOrderService {
                 JSONObject value = object.getJSONObject("value");
                 node.setBatchId(value.getString("bathId"));
                 node.setDate(DateUtil.strToDate(value.getString("date")));
+                node.setProductId(value.getInteger("proId"));
+                node.setProductName(value.getString("proName"));
+                node.setProductUnit(value.getString("proUnit"));
                 nodes.add(node);
             } else {
                 OrderNode node = new OrderNode();
@@ -211,6 +216,9 @@ public class OrderServiceImpl implements IOrderService {
                 node.setClientName(value.getString("reci"));
                 node.setSupplierName(value.getString("send"));
                 node.setQuantity(value.getDouble("quantity"));
+                node.setProductId(value.getInteger("proId"));
+                node.setProductName(value.getString("proName"));
+                node.setProductUnit(value.getString("proUnit"));
                 nodes.add(node);
             }
         }
@@ -229,10 +237,12 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public TraceResult traceProductBack(String ownerId, String proId, String batchId, String adminName, String clientKey, String clientCrt, String serverCrt) throws Exception {
+        Thread.sleep(1000);
         FabricClient client = new FabricClient(adminName, clientKey, clientCrt, serverCrt);
         client.init();
         Responses responses = client.traceProductsBack(ownerId, proId, batchId);
-
+        Thread.sleep(1000);
+        client = null;
         String message = responses.getMessages();
         JSONObject jsonObject = JSONObject.parseObject(message);
         List<JSONObject> jsonNodes = (List<JSONObject>) jsonObject.get("node");
@@ -253,6 +263,9 @@ public class OrderServiceImpl implements IOrderService {
                 JSONObject value = object.getJSONObject("value");
                 node.setBatchId(value.getString("batchId"));
                 node.setDate(DateUtil.strToDate(value.getString("date")));
+                node.setProductId(value.getInteger("proId"));
+                node.setProductName(value.getString("proName"));
+                node.setProductUnit(value.getString("proUnit"));
                 nodes.add(node);
             } else {
                 OrderNode node = new OrderNode();
@@ -264,6 +277,9 @@ public class OrderServiceImpl implements IOrderService {
                 node.setClientName(value.getString("reci"));
                 node.setSupplierName(value.getString("send"));
                 node.setQuantity(value.getDouble("quantity"));
+                node.setProductId(value.getInteger("proId"));
+                node.setProductName(value.getString("proName"));
+                node.setProductUnit(value.getString("proUnit"));
                 nodes.add(node);
             }
         }
@@ -291,7 +307,7 @@ public class OrderServiceImpl implements IOrderService {
             OrderWithProduct orderWithProduct = new OrderWithProduct();
             orderWithProduct.setClientName((String) map.get("client_name"));
             orderWithProduct.setSupplierName((String) map.get("supplier_name"));
-            orderWithProduct.setDate(DateUtil.strToDate((String) map.get("date")));
+            orderWithProduct.setDate((Date) map.get("date"));
             orderWithProduct.setOrderId((Integer) map.get("order_id"));
             orderWithProduct.setPrice((Double) map.get("price"));
             orderWithProduct.setQuantity((Double) map.get("quantity"));

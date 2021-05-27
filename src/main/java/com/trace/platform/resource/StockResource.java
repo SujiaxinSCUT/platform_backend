@@ -84,11 +84,11 @@ public class StockResource {
         Stock stock = stockSaveRequest.getStock();
 
         List<FormedBatch> batchList = stockSaveRequest.getBatchList();
-        Map<String, List<String>> form = new HashMap<>();
+        Map<Integer, List<String>> form = new HashMap<>();
         for (FormedBatch batch : batchList) {
             Set<String> keySet = batch.getBatchesNumMap().keySet();
             List<String> batches = new ArrayList<>(keySet);
-            form.put(batch.getProductName(), batches);
+            form.put(batch.getProductId(), batches);
         }
 
         com.trace.platform.service.dto.StockCreateRequest request = new com.trace.platform.service.dto.StockCreateRequest();
